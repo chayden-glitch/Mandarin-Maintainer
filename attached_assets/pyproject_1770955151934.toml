@@ -1,0 +1,19 @@
+[project]
+name = "repl-nix-workspace"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "edge-tts>=7.2.7",
+    "feedparser>=6.0.12",
+    "fsrs>=6.3.0",
+    "google-genai>=1.56.0",
+    "jieba>=0.42.1",
+    "newspaper3k>=0.2.8",
+    "newspaper4k>=0.9.4.1",
+    "opencc>=1.1.9",
+    "opencc-python-reimplemented>=0.1.7",
+    "pandas>=2.3.3",
+    "sift-stack-py>=0.9.6",
+    "streamlit>=1.52.2",
+]

@@ -1,0 +1,693 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red183\green111\blue179;\red24\green24\blue24;\red193\green193\blue193;
+\red67\green192\blue160;\red212\green214\blue154;\red140\green211\blue254;\red202\green202\blue202;\red194\green126\blue101;
+\red70\green137\blue204;\red167\green197\blue152;\red66\green179\blue255;\red89\green138\blue67;\red205\green173\blue106;
+\red196\green83\blue86;}
+{\*\expandedcolortbl;;\cssrgb\c77255\c52549\c75294;\cssrgb\c12157\c12157\c12157;\cssrgb\c80000\c80000\c80000;
+\cssrgb\c30588\c78824\c69020;\cssrgb\c86275\c86275\c66667;\cssrgb\c61176\c86275\c99608;\cssrgb\c83137\c83137\c83137;\cssrgb\c80784\c56863\c47059;
+\cssrgb\c33725\c61176\c83922;\cssrgb\c70980\c80784\c65882;\cssrgb\c30980\c75686\c100000;\cssrgb\c41569\c60000\c33333;\cssrgb\c84314\c72941\c49020;
+\cssrgb\c81961\c41176\c41176;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 feedparser\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 import\cf4 \strokec4  jieba\cb1 \
+\cf2 \cb3 \strokec2 from\cf4 \strokec4  \cf5 \strokec5 typing\cf4 \strokec4  \cf2 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 List\cf4 \strokec4 , \cf5 \strokec5 Dict\cf4 \strokec4 , \cf5 \strokec5 Any\cf4 \strokec4 , \cf5 \strokec5 Optional\cf4 \strokec4 , \cf5 \strokec5 Set\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 database\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 from\cf4 \strokec4  \cf5 \strokec5 datetime\cf4 \strokec4  \cf2 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 datetime\cf4 \strokec4 , \cf5 \strokec5 timedelta\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 from\cf4 \strokec4  \cf5 \strokec5 email\cf4 \strokec4 .\cf5 \strokec5 utils\cf4 \strokec4  \cf2 \strokec2 import\cf4 \strokec4  \cf6 \strokec6 parsedate_to_datetime\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 os\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 from\cf4 \strokec4  \cf5 \strokec5 google\cf4 \strokec4  \cf2 \strokec2 import\cf4 \strokec4  genai\cb1 \
+\cf2 \cb3 \strokec2 from\cf4 \strokec4  google.genai \cf2 \strokec2 import\cf4 \strokec4  types\cb1 \
+\cf2 \cb3 \strokec2 from\cf4 \strokec4  opencc \cf2 \strokec2 import\cf4 \strokec4  OpenCC\cb1 \
+\cf2 \cb3 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 requests\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 from\cf4 \strokec4  \cf5 \strokec5 bs4\cf4 \strokec4  \cf2 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 BeautifulSoup\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 from\cf4 \strokec4  \cf5 \strokec5 urllib\cf4 \strokec4 .\cf5 \strokec5 parse\cf4 \strokec4  \cf2 \strokec2 import\cf4 \strokec4  \cf6 \strokec6 urljoin\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf7 \cb3 \strokec7 cc_t2s\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  OpenCC(\cf9 \strokec9 't2s'\cf4 \strokec4 )\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 convert_traditional_to_simplified\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 ) -> \cf5 \strokec5 str\cf4 \strokec4 :\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Convert traditional Chinese characters to simplified using OpenCC"""\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 text\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 text\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 cc_t2s\cf4 \strokec4 .convert(\cf7 \strokec7 text\cf4 \strokec4 )\cb1 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 parse_article_date\cf4 \strokec4 (\cf7 \strokec7 date_string\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 ) -> \cf5 \strokec5 Optional\cf4 \strokec4 [\cf5 \strokec5 datetime\cf4 \strokec4 ]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Parse various RSS date formats into a datetime object."""\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 date_string\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf6 \strokec6 parsedate_to_datetime\cf4 \strokec4 (\cf7 \strokec7 date_string\cf4 \strokec4 )\cb1 \
+\cb3     \cf2 \strokec2 except\cf4 \strokec4  (\cf5 \strokec5 ValueError\cf4 \strokec4 , \cf5 \strokec5 TypeError\cf4 \strokec4 ):\cb1 \
+\cb3         \cf2 \strokec2 pass\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf7 \strokec7 date_formats\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  [\cb1 \
+\cb3         \cf9 \strokec9 '%Y-%m-\cf10 \strokec10 %d\cf9 \strokec9 T%H:%M:%S%z'\cf4 \strokec4 ,\cb1 \
+\cb3         \cf9 \strokec9 '%Y-%m-\cf10 \strokec10 %d\cf9 \strokec9 T%H:%M:%SZ'\cf4 \strokec4 ,\cb1 \
+\cb3         \cf9 \strokec9 '%Y-%m-\cf10 \strokec10 %d\cf9 \strokec9  %H:%M:%S'\cf4 \strokec4 ,\cb1 \
+\cb3         \cf9 \strokec9 '%Y-%m-\cf10 \strokec10 %d\cf9 \strokec9 '\cf4 \strokec4 ,\cb1 \
+\cb3         \cf9 \strokec9 '\cf10 \strokec10 %a\cf9 \strokec9 , \cf10 \strokec10 %d\cf9 \strokec9  \cf10 \strokec10 %b\cf9 \strokec9  %Y %H:%M:%S %z'\cf4 \strokec4 ,\cb1 \
+\cb3         \cf9 \strokec9 '\cf10 \strokec10 %a\cf9 \strokec9 , \cf10 \strokec10 %d\cf9 \strokec9  \cf10 \strokec10 %b\cf9 \strokec9  %Y %H:%M:%S %Z'\cf4 \strokec4 ,\cb1 \
+\cb3     ]\cb1 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 fmt\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 date_formats\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3             \cf2 \strokec2 return\cf4 \strokec4  \cf5 \strokec5 datetime\cf4 \strokec4 .\cf6 \strokec6 strptime\cf4 \strokec4 (\cf7 \strokec7 date_string\cf4 \strokec4 , \cf7 \strokec7 fmt\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 except\cf4 \strokec4  (\cf5 \strokec5 ValueError\cf4 \strokec4 , \cf5 \strokec5 TypeError\cf4 \strokec4 ):\cb1 \
+\cb3             \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 is_article_recent\cf4 \strokec4 (\cf7 \strokec7 date_string\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 , \cf7 \strokec7 max_age_days\cf4 \strokec4 : \cf5 \strokec5 int\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf11 \strokec11 7\cf4 \strokec4 ) -> \cf5 \strokec5 bool\cf4 \strokec4 :\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Check if an article was published within the last max_age_days."""\cf4 \cb1 \strokec4 \
+\cb3     \cf7 \strokec7 article_date\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 parse_article_date\cf4 \strokec4 (\cf7 \strokec7 date_string\cf4 \strokec4 )\cb1 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 article_date\cf4 \strokec4  \cf10 \strokec10 is\cf4 \strokec4  \cf10 \strokec10 None\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 False\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 article_date\cf4 \strokec4 .\cf7 \strokec7 tzinfo\cf4 \strokec4  \cf10 \strokec10 is\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf10 \strokec10 None\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 article_date\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 article_date\cf4 \strokec4 .\cf6 \strokec6 replace\cf4 \strokec4 (\cf7 \strokec7 tzinfo\cf8 \strokec8 =\cf10 \strokec10 None\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf7 \strokec7 cutoff_date\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 datetime\cf4 \strokec4 .\cf6 \strokec6 now\cf4 \strokec4 () \cf6 \strokec6 -\cf4 \strokec4  \cf5 \strokec5 timedelta\cf4 \strokec4 (\cf7 \strokec7 days\cf8 \strokec8 =\cf7 \strokec7 max_age_days\cf4 \strokec4 )\cb1 \
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 article_date\cf4 \strokec4  \cf6 \strokec6 >=\cf4 \strokec4  \cf7 \strokec7 cutoff_date\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf12 \cb3 \strokec12 RSS_FEEDS\cf4 \cb3 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 'NYT Chinese'\cf4 \strokec4 : \cf9 \strokec9 'https://cn.nytimes.com/rss/'\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 'WSJ Chinese'\cf4 \strokec4 : \cf9 \strokec9 'https://cn.wsj.com/zh-hans/rss'\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 'BBC \uc0\u37329 \u34701 \u36130 \u32463 '\cf4 \strokec4 : \cf9 \strokec9 'http://www.bbc.co.uk/zhongwen/simp/business/index.xml'\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 'BBC \uc0\u31185 \u25216 '\cf4 \strokec4 : \cf9 \strokec9 'http://www.bbc.co.uk/zhongwen/simp/science/index.xml'\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 'BBC \uc0\u20027 \u39029 '\cf4 \strokec4 : \cf9 \strokec9 'http://www.bbc.co.uk/zhongwen/simp/index.xml'\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 'VOA Chinese'\cf4 \strokec4 : \cf9 \strokec9 'https://www.voachinese.com/api/z$mqrevqt_'\cf4 \cb1 \strokec4 \
+\cb3 \}\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf12 \cb3 \strokec12 PRIORITY_KEYWORDS\cf4 \cb3 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  [\cf9 \strokec9 '\uc0\u20851 \u31246 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u29305 \u26391 \u26222 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u37329 \u34701 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u36130 \u32463 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u31185 \u25216 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u32463 \u27982 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u36152 \u26131 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u24066 \u22330 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u25237 \u36164 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u21830 \u19994 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u31185 \u23398 '\cf4 \strokec4 , \cf9 \strokec9 '\uc0\u25216 \u26415 '\cf4 \strokec4 ]\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf7 \cb3 \strokec7 _gemini_client\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\cf7 \cb3 \strokec7 _gemini_client_key\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 _load_streamlit_secret_key\cf4 \strokec4 () -> \cf5 \strokec5 Optional\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 ]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf7 \strokec7 secrets_path\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 os\cf4 \strokec4 .\cf7 \strokec7 path\cf4 \strokec4 .\cf6 \strokec6 join\cf4 \strokec4 (\cf5 \strokec5 os\cf4 \strokec4 .\cf7 \strokec7 path\cf4 \strokec4 .\cf6 \strokec6 dirname\cf4 \strokec4 (\cf7 \strokec7 __file__\cf4 \strokec4 ), \cf9 \strokec9 '.streamlit'\cf4 \strokec4 , \cf9 \strokec9 'secrets.toml'\cf4 \strokec4 )\cb1 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf5 \strokec5 os\cf4 \strokec4 .\cf7 \strokec7 path\cf4 \strokec4 .\cf6 \strokec6 exists\cf4 \strokec4 (\cf7 \strokec7 secrets_path\cf4 \strokec4 ):\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3             \cf2 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 tomllib\cf4 \strokec4   \cf13 \strokec13 # Python 3.11+\cf4 \cb1 \strokec4 \
+\cb3         \cf2 \strokec2 except\cf4 \strokec4  \cf5 \strokec5 ModuleNotFoundError\cf4 \strokec4 :\cb1 \
+\cb3             \cf2 \strokec2 import\cf4 \strokec4  tomli \cf2 \strokec2 as\cf4 \strokec4  \cf5 \strokec5 tomllib\cf4 \cb1 \strokec4 \
+\
+\cb3         \cf2 \strokec2 with\cf4 \strokec4  \cf6 \strokec6 open\cf4 \strokec4 (\cf7 \strokec7 secrets_path\cf4 \strokec4 , \cf9 \strokec9 'rb'\cf4 \strokec4 ) \cf2 \strokec2 as\cf4 \strokec4  \cf7 \strokec7 f\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 data\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 tomllib\cf4 \strokec4 .\cf6 \strokec6 load\cf4 \strokec4 (\cf7 \strokec7 f\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 data\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'GEMINI_API_KEY'\cf4 \strokec4 )\cb1 \
+\cb3     \cf2 \strokec2 except\cf4 \strokec4  \cf5 \strokec5 Exception\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 get_gemini_client\cf4 \strokec4 ():\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf10 \strokec10 global\cf4 \strokec4  \cf7 \strokec7 _gemini_client\cf4 \strokec4 , \cf7 \strokec7 _gemini_client_key\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf7 \strokec7 api_key\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 os\cf4 \strokec4 .\cf7 \strokec7 environ\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 "GEMINI_API_KEY"\cf4 \strokec4 )\cb1 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 api_key\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 api_key\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 _load_streamlit_secret_key\cf4 \strokec4 ()\cb1 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 api_key\cf4 \strokec4 :\cb1 \
+\cb3             \cf5 \strokec5 os\cf4 \strokec4 .\cf7 \strokec7 environ\cf4 \strokec4 [\cf9 \strokec9 "GEMINI_API_KEY"\cf4 \strokec4 ] \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 api_key\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 api_key\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 _gemini_client\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\cb3         \cf7 \strokec7 _gemini_client_key\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 _gemini_client\cf4 \strokec4  \cf10 \strokec10 is\cf4 \strokec4  \cf10 \strokec10 None\cf4 \strokec4  \cf10 \strokec10 or\cf4 \strokec4  \cf7 \strokec7 _gemini_client_key\cf4 \strokec4  \cf8 \strokec8 !=\cf4 \strokec4  \cf7 \strokec7 api_key\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 _gemini_client\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  genai.Client(\cf7 \strokec7 api_key\cf8 \strokec8 =\cf7 \strokec7 api_key\cf4 \strokec4 )\cb1 \
+\cb3         \cf7 \strokec7 _gemini_client_key\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 api_key\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 _gemini_client\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 fetch_feed\cf4 \strokec4 (\cf7 \strokec7 feed_url\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 , \cf7 \strokec7 convert_to_simplified\cf4 \strokec4 : \cf5 \strokec5 bool\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 False\cf4 \strokec4 , \cf7 \strokec7 max_age_days\cf4 \strokec4 : \cf5 \strokec5 int\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf11 \strokec11 7\cf4 \strokec4 ) -> \cf5 \strokec5 List\cf4 \strokec4 [\cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Any\cf4 \strokec4 ]]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf7 \strokec7 feed\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 feedparser\cf4 \strokec4 .\cf6 \strokec6 parse\cf4 \strokec4 (\cf7 \strokec7 feed_url\cf4 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 articles\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  []\cb1 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 entry\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 feed\cf4 \strokec4 .entries[:\cf11 \strokec11 50\cf4 \strokec4 ]:\cb1 \
+\cb3         \cf7 \strokec7 published\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf9 \strokec9 ''\cf4 \cb1 \strokec4 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 hasattr\cf4 \strokec4 (\cf7 \strokec7 entry\cf4 \strokec4 , \cf9 \strokec9 'published'\cf4 \strokec4 ):\cb1 \
+\cb3             \cf7 \strokec7 published\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 entry\cf4 \strokec4 .published\cb1 \
+\cb3         \cf2 \strokec2 elif\cf4 \strokec4  \cf6 \strokec6 hasattr\cf4 \strokec4 (\cf7 \strokec7 entry\cf4 \strokec4 , \cf9 \strokec9 'updated'\cf4 \strokec4 ):\cb1 \
+\cb3             \cf7 \strokec7 published\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 entry\cf4 \strokec4 .updated\cb1 \
+\
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf6 \strokec6 is_article_recent\cf4 \strokec4 (\cf7 \strokec7 published\cf4 \strokec4 , \cf7 \strokec7 max_age_days\cf4 \strokec4 ):\cb1 \
+\cb3             \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\
+\cb3         \cf7 \strokec7 title\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 entry\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'title'\cf4 \strokec4 , \cf9 \strokec9 'No title'\cf4 \strokec4 )\cb1 \
+\cb3         \cf7 \strokec7 summary\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 entry\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'summary'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 convert_to_simplified\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 title\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 convert_traditional_to_simplified\cf4 \strokec4 (\cf7 \strokec7 title\cf4 \strokec4 )\cb1 \
+\cb3             \cf7 \strokec7 summary\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 convert_traditional_to_simplified\cf4 \strokec4 (\cf7 \strokec7 summary\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf7 \strokec7 articles\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\{\cb1 \
+\cb3             \cf9 \strokec9 'title'\cf4 \strokec4 : \cf7 \strokec7 title\cf4 \strokec4 ,\cb1 \
+\cb3             \cf9 \strokec9 'link'\cf4 \strokec4 : \cf7 \strokec7 entry\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'link'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 ),\cb1 \
+\cb3             \cf9 \strokec9 'summary'\cf4 \strokec4 : \cf7 \strokec7 summary\cf4 \strokec4 ,\cb1 \
+\cb3             \cf9 \strokec9 'published'\cf4 \strokec4 : \cf7 \strokec7 published\cf4 \strokec4 ,\cb1 \
+\cb3             \cf9 \strokec9 'source'\cf4 \strokec4 : \cf7 \strokec7 feed\cf4 \strokec4 .feed.get(\cf9 \strokec9 'title'\cf4 \strokec4 , \cf9 \strokec9 'Unknown'\cf4 \strokec4 )\cb1 \
+\cb3         \})\cb1 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 articles\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf12 \cb3 \strokec12 FREE_SOURCES\cf4 \cb3 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\cf9 \strokec9 'BBC \uc0\u37329 \u34701 \u36130 \u32463 '\cf4 \strokec4 , \cf9 \strokec9 'BBC \uc0\u31185 \u25216 '\cf4 \strokec4 , \cf9 \strokec9 'BBC \uc0\u20027 \u39029 '\cf4 \strokec4 , \cf9 \strokec9 'VOA Chinese'\cf4 \strokec4 \}\cb1 \
+\cf12 \cb3 \strokec12 PAYWALLED_SOURCES\cf4 \cb3 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\cf9 \strokec9 'NYT Chinese'\cf4 \strokec4 , \cf9 \strokec9 'WSJ Chinese'\cf4 \strokec4 \}\cb1 \
+\
+\cf12 \cb3 \strokec12 NEEDS_CONVERSION\cf4 \cb3 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\cf9 \strokec9 'BBC \uc0\u37329 \u34701 \u36130 \u32463 '\cf4 \strokec4 , \cf9 \strokec9 'BBC \uc0\u31185 \u25216 '\cf4 \strokec4 , \cf9 \strokec9 'BBC \uc0\u20027 \u39029 '\cf4 \strokec4 \}\cb1 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 calculate_article_priority\cf4 \strokec4 (\cf7 \strokec7 article\cf4 \strokec4 : \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Any\cf4 \strokec4 ]) -> \cf5 \strokec5 int\cf4 \strokec4 :\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Calculate priority score for an article based on keywords. Higher = more relevant."""\cf4 \cb1 \strokec4 \
+\cb3     \cf7 \strokec7 title\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 article\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'title'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 summary\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 article\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'summary'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 text\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 title\cf4 \strokec4  \cf8 \strokec8 +\cf4 \strokec4  \cf9 \strokec9 ' '\cf4 \strokec4  \cf8 \strokec8 +\cf4 \strokec4  \cf7 \strokec7 summary\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf7 \strokec7 score\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf11 \strokec11 0\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 keyword\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf12 \cb3 \strokec12 PRIORITY_KEYWORDS\cf4 \cb3 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 keyword\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 text\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 score\cf4 \strokec4  \cf8 \strokec8 +=\cf4 \strokec4  \cf11 \strokec11 10\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 score\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 fetch_all_feeds\cf4 \strokec4 () -> \cf5 \strokec5 List\cf4 \strokec4 [\cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Any\cf4 \strokec4 ]]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf7 \strokec7 all_articles\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  []\cb1 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 name\cf4 \strokec4 , \cf7 \strokec7 url\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf12 \cb3 \strokec12 RSS_FEEDS\cf4 \cb3 \strokec4 .\cf6 \strokec6 items\cf4 \strokec4 ():\cb1 \
+\cb3         \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 needs_conversion\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 name\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf12 \cb3 \strokec12 NEEDS_CONVERSION\cf4 \cb1 \strokec4 \
+\cb3             \cf7 \strokec7 articles\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 fetch_feed\cf4 \strokec4 (\cf7 \strokec7 url\cf4 \strokec4 , \cf7 \strokec7 convert_to_simplified\cf8 \strokec8 =\cf7 \strokec7 needs_conversion\cf4 \strokec4 )\cb1 \
+\cb3             \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 article\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 articles\cf4 \strokec4 :\cb1 \
+\cb3                 \cf7 \strokec7 article\cf4 \strokec4 [\cf9 \strokec9 'feed_name'\cf4 \strokec4 ] \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 name\cf4 \cb1 \strokec4 \
+\cb3                 \cf7 \strokec7 article\cf4 \strokec4 [\cf9 \strokec9 'is_free'\cf4 \strokec4 ] \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 name\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf12 \cb3 \strokec12 FREE_SOURCES\cf4 \cb1 \strokec4 \
+\cb3                 \cf7 \strokec7 article\cf4 \strokec4 [\cf9 \strokec9 'needs_conversion'\cf4 \strokec4 ] \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 needs_conversion\cf4 \cb1 \strokec4 \
+\cb3                 \cf7 \strokec7 article\cf4 \strokec4 [\cf9 \strokec9 'priority'\cf4 \strokec4 ] \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 calculate_article_priority\cf4 \strokec4 (\cf7 \strokec7 article\cf4 \strokec4 )\cb1 \
+\
+\cb3             \cf7 \strokec7 all_articles\cf4 \strokec4 .\cf6 \strokec6 extend\cf4 \strokec4 (\cf7 \strokec7 articles\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 except\cf4 \strokec4  \cf5 \strokec5 Exception\cf4 \strokec4  \cf2 \strokec2 as\cf4 \strokec4  \cf7 \strokec7 e\cf4 \strokec4 :\cb1 \
+\cb3             \cf6 \strokec6 print\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 "Error fetching \cf10 \strokec10 \{\cf7 \strokec7 name\cf10 \strokec10 \}\cf9 \strokec9 : \cf10 \strokec10 \{\cf7 \strokec7 e\cf10 \strokec10 \}\cf9 \strokec9 "\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf7 \strokec7 free_articles\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  [\cf7 \strokec7 a\cf4 \strokec4  \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 a\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 all_articles\cf4 \strokec4  \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 a\cf4 \strokec4 .get(\cf9 \strokec9 'is_free'\cf4 \strokec4 , \cf10 \strokec10 False\cf4 \strokec4 )]\cb1 \
+\cb3     \cf7 \strokec7 paid_articles\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  [\cf7 \strokec7 a\cf4 \strokec4  \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 a\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 all_articles\cf4 \strokec4  \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 a\cf4 \strokec4 .get(\cf9 \strokec9 'is_free'\cf4 \strokec4 , \cf10 \strokec10 False\cf4 \strokec4 )]\cb1 \
+\
+\cb3     \cf7 \strokec7 free_articles\cf4 \strokec4 .\cf6 \strokec6 sort\cf4 \strokec4 (\cf7 \strokec7 key\cf8 \strokec8 =\cf10 \strokec10 lambda\cf4 \strokec4  \cf7 \strokec7 x\cf4 \strokec4 : \cf7 \strokec7 x\cf4 \strokec4 .get(\cf9 \strokec9 'priority'\cf4 \strokec4 , \cf11 \strokec11 0\cf4 \strokec4 ), \cf7 \strokec7 reverse\cf8 \strokec8 =\cf10 \strokec10 True\cf4 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 paid_articles\cf4 \strokec4 .\cf6 \strokec6 sort\cf4 \strokec4 (\cf7 \strokec7 key\cf8 \strokec8 =\cf10 \strokec10 lambda\cf4 \strokec4  \cf7 \strokec7 x\cf4 \strokec4 : \cf7 \strokec7 x\cf4 \strokec4 .get(\cf9 \strokec9 'priority'\cf4 \strokec4 , \cf11 \strokec11 0\cf4 \strokec4 ), \cf7 \strokec7 reverse\cf8 \strokec8 =\cf10 \strokec10 True\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 free_articles\cf4 \strokec4  \cf8 \strokec8 +\cf4 \strokec4  \cf7 \strokec7 paid_articles\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 fetch_article_content\cf4 \strokec4 (\cf7 \strokec7 url\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 , \cf7 \strokec7 convert_to_simplified\cf4 \strokec4 : \cf5 \strokec5 bool\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 False\cf4 \strokec4 ) -> \cf5 \strokec5 Optional\cf4 \strokec4 [\cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Any\cf4 \strokec4 ]]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 headers\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\cb1 \
+\cb3             \cf9 \strokec9 'User-Agent'\cf4 \strokec4 : \cf9 \strokec9 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'\cf4 \cb1 \strokec4 \
+\cb3         \}\cb1 \
+\cb3         \cf7 \strokec7 response\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 requests\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf7 \strokec7 url\cf4 \strokec4 , \cf7 \strokec7 headers\cf8 \strokec8 =\cf7 \strokec7 headers\cf4 \strokec4 , \cf7 \strokec7 timeout\cf8 \strokec8 =\cf11 \strokec11 10\cf4 \strokec4 )\cb1 \
+\cb3         \cf7 \strokec7 response\cf4 \strokec4 .\cf7 \strokec7 encoding\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf9 \strokec9 'utf-8'\cf4 \cb1 \strokec4 \
+\
+\cb3         \cf7 \strokec7 soup\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 BeautifulSoup\cf4 \strokec4 (\cf7 \strokec7 response\cf4 \strokec4 .\cf7 \strokec7 text\cf4 \strokec4 , \cf9 \strokec9 'html.parser'\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf13 \strokec13 # Extract title\cf4 \cb1 \strokec4 \
+\cb3         \cf7 \strokec7 title\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf9 \strokec9 ''\cf4 \cb1 \strokec4 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 soup\cf4 \strokec4 .\cf6 \strokec6 find\cf4 \strokec4 (\cf9 \strokec9 'h1'\cf4 \strokec4 ):\cb1 \
+\cb3             \cf7 \strokec7 title\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 soup\cf4 \strokec4 .\cf6 \strokec6 find\cf4 \strokec4 (\cf9 \strokec9 'h1'\cf4 \strokec4 ).\cf6 \strokec6 get_text\cf4 \strokec4 ().\cf6 \strokec6 strip\cf4 \strokec4 ()\cb1 \
+\cb3         \cf2 \strokec2 elif\cf4 \strokec4  \cf7 \strokec7 soup\cf4 \strokec4 .\cf6 \strokec6 find\cf4 \strokec4 (\cf9 \strokec9 'title'\cf4 \strokec4 ):\cb1 \
+\cb3             \cf7 \strokec7 title\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 soup\cf4 \strokec4 .\cf6 \strokec6 find\cf4 \strokec4 (\cf9 \strokec9 'title'\cf4 \strokec4 ).\cf6 \strokec6 get_text\cf4 \strokec4 ().\cf6 \strokec6 strip\cf4 \strokec4 ()\cb1 \
+\
+\cb3         \cf13 \strokec13 # Extract main text content (paragraphs only)\cf4 \cb1 \strokec4 \
+\cb3         \cf7 \strokec7 text\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf9 \strokec9 ''\cf4 \cb1 \strokec4 \
+\cb3         \cf7 \strokec7 content_root\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 soup\cf4 \strokec4 .\cf6 \strokec6 find\cf4 \strokec4 (\cf9 \strokec9 'article'\cf4 \strokec4 ) \cf10 \strokec10 or\cf4 \strokec4  \cf7 \strokec7 soup\cf4 \strokec4 .\cf6 \strokec6 find\cf4 \strokec4 (\cf9 \strokec9 'main'\cf4 \strokec4 ) \cf10 \strokec10 or\cf4 \strokec4  \cf7 \strokec7 soup\cf4 \cb1 \strokec4 \
+\cb3         \cf7 \strokec7 paragraphs\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  []\cb1 \
+\cb3         \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 tag\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 content_root\cf4 \strokec4 .\cf6 \strokec6 find_all\cf4 \strokec4 (\cf9 \strokec9 'p'\cf4 \strokec4 ):\cb1 \
+\cb3             \cf7 \strokec7 para\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 tag\cf4 \strokec4 .\cf6 \strokec6 get_text\cf4 \strokec4 ().\cf6 \strokec6 strip\cf4 \strokec4 ()\cb1 \
+\cb3             \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 para\cf4 \strokec4 :\cb1 \
+\cb3                 \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\cb3             \cf7 \strokec7 paragraphs\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf7 \strokec7 para\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 paragraphs\cf4 \strokec4 :\cb1 \
+\cb3             \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 tag\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 content_root\cf4 \strokec4 .\cf6 \strokec6 find_all\cf4 \strokec4 (\cf9 \strokec9 'div'\cf4 \strokec4 ):\cb1 \
+\cb3                 \cf7 \strokec7 para\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 tag\cf4 \strokec4 .\cf6 \strokec6 get_text\cf4 \strokec4 ().\cf6 \strokec6 strip\cf4 \strokec4 ()\cb1 \
+\cb3                 \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 para\cf4 \strokec4 :\cb1 \
+\cb3                     \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\cb3                 \cf7 \strokec7 paragraphs\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf7 \strokec7 para\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf7 \strokec7 text\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf9 \strokec9 '\cf14 \strokec14 \\n\\n\cf9 \strokec9 '\cf4 \strokec4 .\cf6 \strokec6 join\cf4 \strokec4 (\cf7 \strokec7 paragraphs\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf13 \strokec13 # Extract image\cf4 \cb1 \strokec4 \
+\cb3         \cf7 \strokec7 top_image\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf9 \strokec9 ''\cf4 \cb1 \strokec4 \
+\cb3         \cf7 \strokec7 img_tag\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 soup\cf4 \strokec4 .\cf6 \strokec6 find\cf4 \strokec4 (\cf9 \strokec9 'img'\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 img_tag\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 img_src\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 img_tag\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'src'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 )\cb1 \
+\cb3             \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 img_src\cf4 \strokec4 :\cb1 \
+\cb3                 \cf7 \strokec7 top_image\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 urljoin\cf4 \strokec4 (\cf7 \strokec7 url\cf4 \strokec4 , \cf7 \strokec7 img_src\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 convert_to_simplified\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 title\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 convert_traditional_to_simplified\cf4 \strokec4 (\cf7 \strokec7 title\cf4 \strokec4 )\cb1 \
+\cb3             \cf7 \strokec7 text\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 convert_traditional_to_simplified\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \{\cb1 \
+\cb3             \cf9 \strokec9 'title'\cf4 \strokec4 : \cf7 \strokec7 title\cf4 \strokec4 ,\cb1 \
+\cb3             \cf9 \strokec9 'text'\cf4 \strokec4 : \cf7 \strokec7 text\cf4 \strokec4 [:\cf11 \strokec11 2000\cf4 \strokec4 ],  \cf13 \strokec13 # Limit to 2000 chars\cf4 \cb1 \strokec4 \
+\cb3             \cf9 \strokec9 'authors'\cf4 \strokec4 : [],\cb1 \
+\cb3             \cf9 \strokec9 'publish_date'\cf4 \strokec4 : \cf10 \strokec10 None\cf4 \strokec4 ,\cb1 \
+\cb3             \cf9 \strokec9 'top_image'\cf4 \strokec4 : \cf7 \strokec7 top_image\cf4 \cb1 \strokec4 \
+\cb3         \}\cb1 \
+\cb3     \cf2 \strokec2 except\cf4 \strokec4  \cf5 \strokec5 Exception\cf4 \strokec4  \cf2 \strokec2 as\cf4 \strokec4  \cf7 \strokec7 e\cf4 \strokec4 :\cb1 \
+\cb3         \cf6 \strokec6 print\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 "Error fetching article: \cf10 \strokec10 \{\cf7 \strokec7 e\cf10 \strokec10 \}\cf9 \strokec9 "\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 get_vocabulary_set\cf4 \strokec4 () -> \cf5 \strokec5 Set\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 ]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf7 \strokec7 words\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 database\cf4 \strokec4 .\cf6 \strokec6 get_all_words\cf4 \strokec4 ()\cb1 \
+\cb3     \cf7 \strokec7 vocab_set\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 set\cf4 \strokec4 ()\cb1 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 word\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 words\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 simplified\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 word\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'simplified'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 simplified\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 vocab_set\cf4 \strokec4 .\cf6 \strokec6 add\cf4 \strokec4 (\cf7 \strokec7 simplified\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 vocab_set\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 segment_text\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 ) -> \cf5 \strokec5 List\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 ]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Segment Chinese text into words using jieba."""\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf5 \strokec5 list\cf4 \strokec4 (\cf5 \strokec5 jieba\cf4 \strokec4 .cut(\cf7 \strokec7 text\cf4 \strokec4 ))\cb1 \
+\cb3     \cf2 \strokec2 except\cf4 \strokec4  \cf5 \strokec5 Exception\cf4 \strokec4  \cf2 \strokec2 as\cf4 \strokec4  \cf7 \strokec7 e\cf4 \strokec4 :\cb1 \
+\cb3         \cf6 \strokec6 print\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 "Error in jieba.cut: \cf10 \strokec10 \{\cf7 \strokec7 e\cf10 \strokec10 \}\cf9 \strokec9 "\cf4 \strokec4 )\cb1 \
+\cb3         \cf13 \strokec13 # Fallback: return text split by spaces and punctuation\cf4 \cb1 \strokec4 \
+\cb3         \cf2 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 re\cf4 \cb1 \strokec4 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf5 \strokec5 re\cf4 \strokec4 .\cf6 \strokec6 findall\cf4 \strokec4 (\cf10 \strokec10 r\cf15 \strokec15 '\\S\cf14 \strokec14 +\cf15 \strokec15 '\cf4 \strokec4 , \cf7 \strokec7 text\cf4 \strokec4 )\cb1 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 escape_html\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 ) -> \cf5 \strokec5 str\cf4 \strokec4 :\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Escape HTML special characters for safe attribute insertion"""\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 text\cf4 \strokec4 .\cf6 \strokec6 replace\cf4 \strokec4 (\cf9 \strokec9 '&'\cf4 \strokec4 , \cf9 \strokec9 '&amp;'\cf4 \strokec4 ).\cf6 \strokec6 replace\cf4 \strokec4 (\cf9 \strokec9 '<'\cf4 \strokec4 , \cf9 \strokec9 '&lt;'\cf4 \strokec4 ).\cf6 \strokec6 replace\cf4 \strokec4 (\cf9 \strokec9 '>'\cf4 \strokec4 , \cf9 \strokec9 '&gt;'\cf4 \strokec4 ).\cf6 \strokec6 replace\cf4 \strokec4 (\cf9 \strokec9 '"'\cf4 \strokec4 , \cf9 \strokec9 '&quot;'\cf4 \strokec4 ).\cf6 \strokec6 replace\cf4 \strokec4 (\cf9 \strokec9 "'"\cf4 \strokec4 , \cf9 \strokec9 '&#39;'\cf4 \strokec4 )\cb1 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 highlight_all_words_html\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 , \cf7 \strokec7 vocabulary\cf4 \strokec4 : \cf5 \strokec5 Set\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 ], \cf7 \strokec7 word_translations\cf4 \strokec4 : \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 str\cf4 \strokec4 ]] \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 None\cf4 \strokec4 ) -> \cf5 \strokec5 str\cf4 \strokec4 :\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Highlight all Chinese words with HTML spans and tooltips. Vocab words in orange, others with just tooltips."""\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 text\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 text\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 word_translations\cf4 \strokec4  \cf10 \strokec10 is\cf4 \strokec4  \cf10 \strokec10 None\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 word_translations\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\}\cb1 \
+\
+\cb3     \cf2 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 re\cf4 \cb1 \strokec4 \
+\cb3     \cf7 \strokec7 chinese_pattern\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 re\cf4 \strokec4 .\cf6 \strokec6 compile\cf4 \strokec4 (\cf10 \strokec10 r\cf15 \strokec15 '\cf9 \strokec9 [\cf10 \strokec10 \\u4e00\cf15 \strokec15 -\cf10 \strokec10 \\u9fff\cf9 \strokec9 ]\cf15 \strokec15 '\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf7 \strokec7 segments\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 segment_text\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 result\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  []\cb1 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 segments\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 chinese_pattern\cf4 \strokec4 .\cf6 \strokec6 search\cf4 \strokec4 (\cf7 \strokec7 segment\cf4 \strokec4 ) \cf10 \strokec10 and\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 word_translations\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 trans\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 word_translations\cf4 \strokec4 [\cf7 \strokec7 segment\cf4 \strokec4 ]\cb1 \
+\cb3             \cf7 \strokec7 pinyin\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 escape_html\cf4 \strokec4 (\cf7 \strokec7 trans\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'pinyin'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 ))\cb1 \
+\cb3             \cf7 \strokec7 english\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 escape_html\cf4 \strokec4 (\cf7 \strokec7 trans\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'english'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 ))\cb1 \
+\cb3             \cf7 \strokec7 tooltip\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 f\cf9 \strokec9 "\cf10 \strokec10 \{\cf7 \strokec7 pinyin\cf10 \strokec10 \}\cf9 \strokec9  - \cf10 \strokec10 \{\cf7 \strokec7 english\cf10 \strokec10 \}\cf9 \strokec9 "\cf4 \cb1 \strokec4 \
+\
+\cb3             \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 vocabulary\cf4 \strokec4 :\cb1 \
+\cb3                 \cf7 \strokec7 result\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 '<span class="vocab-word" data-tip="\cf10 \strokec10 \{\cf7 \strokec7 tooltip\cf10 \strokec10 \}\cf9 \strokec9 ">\cf10 \strokec10 \{\cf7 \strokec7 segment\cf10 \strokec10 \}\cf9 \strokec9 </span>'\cf4 \strokec4 )\cb1 \
+\cb3             \cf2 \strokec2 else\cf4 \strokec4 :\cb1 \
+\cb3                 \cf7 \strokec7 result\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 '<span class="chinese-word" data-tip="\cf10 \strokec10 \{\cf7 \strokec7 tooltip\cf10 \strokec10 \}\cf9 \strokec9 ">\cf10 \strokec10 \{\cf7 \strokec7 segment\cf10 \strokec10 \}\cf9 \strokec9 </span>'\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 elif\cf4 \strokec4  \cf7 \strokec7 chinese_pattern\cf4 \strokec4 .\cf6 \strokec6 search\cf4 \strokec4 (\cf7 \strokec7 segment\cf4 \strokec4 ) \cf10 \strokec10 and\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 vocabulary\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 result\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 '<span class="vocab-word">\cf10 \strokec10 \{\cf7 \strokec7 segment\cf10 \strokec10 \}\cf9 \strokec9 </span>'\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 else\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 result\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf7 \strokec7 segment\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf9 \strokec9 ''\cf4 \strokec4 .\cf6 \strokec6 join\cf4 \strokec4 (\cf7 \strokec7 result\cf4 \strokec4 )\cb1 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 get_vocabulary_matches\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 , \cf7 \strokec7 vocabulary\cf4 \strokec4 : \cf5 \strokec5 Set\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 ]) -> \cf5 \strokec5 List\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 ]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 text\cf4 \strokec4  \cf10 \strokec10 or\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 vocabulary\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  []\cb1 \
+\
+\cb3     \cf7 \strokec7 segments\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 segment_text\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 matches\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  []\cb1 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 segments\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 vocabulary\cf4 \strokec4  \cf10 \strokec10 and\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 matches\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 matches\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf7 \strokec7 segment\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 matches\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 get_word_details\cf4 \strokec4 (\cf7 \strokec7 word\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 ) -> \cf5 \strokec5 Optional\cf4 \strokec4 [\cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Any\cf4 \strokec4 ]]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf7 \strokec7 conn\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 database\cf4 \strokec4 .\cf6 \strokec6 get_connection\cf4 \strokec4 ()\cb1 \
+\cb3     \cf7 \strokec7 cursor\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 conn\cf4 \strokec4 .\cf6 \strokec6 cursor\cf4 \strokec4 ()\cb1 \
+\cb3     \cf7 \strokec7 cursor\cf4 \strokec4 .\cf6 \strokec6 execute\cf4 \strokec4 (\cf9 \strokec9 "SELECT * FROM vocabulary WHERE simplified = ?"\cf4 \strokec4 , (\cf7 \strokec7 word\cf4 \strokec4 ,))\cb1 \
+\cb3     \cf7 \strokec7 row\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 cursor\cf4 \strokec4 .\cf6 \strokec6 fetchone\cf4 \strokec4 ()\cb1 \
+\cb3     \cf7 \strokec7 conn\cf4 \strokec4 .\cf6 \strokec6 close\cf4 \strokec4 ()\cb1 \
+\
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 row\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf5 \strokec5 dict\cf4 \strokec4 (\cf7 \strokec7 row\cf4 \strokec4 )\cb1 \
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 batch_translate_titles\cf4 \strokec4 (\cf7 \strokec7 titles\cf4 \strokec4 : \cf5 \strokec5 List\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 ]) -> \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 str\cf4 \strokec4 ]]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Translate multiple titles in a single API call. Returns dict mapping title -> \{pinyin, english\}"""\cf4 \cb1 \strokec4 \
+\cb3     \cf7 \strokec7 gemini_client\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 get_gemini_client\cf4 \strokec4 ()\cb1 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 gemini_client\cf4 \strokec4  \cf10 \strokec10 or\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 titles\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \{\}\cb1 \
+\
+\cb3     \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 titles_text\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf9 \strokec9 "\cf14 \strokec14 \\n\cf9 \strokec9 "\cf4 \strokec4 .\cf6 \strokec6 join\cf4 \strokec4 ([\cf10 \strokec10 f\cf9 \strokec9 "\cf10 \strokec10 \{\cf7 \strokec7 i\cf8 \strokec8 +\cf11 \strokec11 1\cf10 \strokec10 \}\cf9 \strokec9 . \cf10 \strokec10 \{\cf7 \strokec7 t\cf10 \strokec10 \}\cf9 \strokec9 "\cf4 \strokec4  \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 i\cf4 \strokec4 , \cf7 \strokec7 t\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf5 \strokec5 enumerate\cf4 \strokec4 (\cf7 \strokec7 titles\cf4 \strokec4 )])\cb1 \
+\cb3         \cf7 \strokec7 prompt\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 f\cf9 \strokec9 """For each Chinese headline below, provide:\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf9 \cb3 \strokec9 1. Pinyin with tone marks\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9 2. English translation\cf4 \cb1 \strokec4 \
+\
+\cf9 \cb3 \strokec9 Format each response as:\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9 [number]. [pinyin] | [english]\cf4 \cb1 \strokec4 \
+\
+\cf9 \cb3 \strokec9 Headlines:\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 \{\cf7 \strokec7 titles_text\cf10 \strokec10 \}\cf9 \strokec9 """\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3         \cf7 \strokec7 response\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 gemini_client\cf4 \strokec4 .models.generate_content(\cb1 \
+\cb3             \cf7 \strokec7 model\cf8 \strokec8 =\cf9 \strokec9 "gemini-2.0-flash"\cf4 \strokec4 ,\cb1 \
+\cb3             \cf7 \strokec7 contents\cf8 \strokec8 =\cf7 \strokec7 prompt\cf4 \cb1 \strokec4 \
+\cb3         )\cb1 \
+\
+\cb3         \cf7 \strokec7 result\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\}\cb1 \
+\cb3         \cf7 \strokec7 lines\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 response\cf4 \strokec4 .text.strip().split(\cf9 \strokec9 '\cf14 \strokec14 \\n\cf9 \strokec9 '\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 lines\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 line\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 .strip()\cb1 \
+\cb3             \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4  \cf10 \strokec10 or\cf4 \strokec4  \cf9 \strokec9 '|'\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 :\cb1 \
+\cb3                 \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\cb3             \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3                 \cf7 \strokec7 parts\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 .split(\cf9 \strokec9 '.'\cf4 \strokec4 , \cf11 \strokec11 1\cf4 \strokec4 )\cb1 \
+\cb3                 \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 len\cf4 \strokec4 (\cf7 \strokec7 parts\cf4 \strokec4 ) \cf8 \strokec8 <\cf4 \strokec4  \cf11 \strokec11 2\cf4 \strokec4 :\cb1 \
+\cb3                     \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\cb3                 \cf7 \strokec7 idx\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 int\cf4 \strokec4 (\cf7 \strokec7 parts\cf4 \strokec4 [\cf11 \strokec11 0\cf4 \strokec4 ].strip()) \cf8 \strokec8 -\cf4 \strokec4  \cf11 \strokec11 1\cf4 \cb1 \strokec4 \
+\cb3                 \cf7 \strokec7 rest\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 parts\cf4 \strokec4 [\cf11 \strokec11 1\cf4 \strokec4 ].strip()\cb1 \
+\cb3                 \cf2 \strokec2 if\cf4 \strokec4  \cf9 \strokec9 '|'\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 rest\cf4 \strokec4 :\cb1 \
+\cb3                     \cf7 \strokec7 pinyin\cf4 \strokec4 , \cf7 \strokec7 english\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 rest\cf4 \strokec4 .split(\cf9 \strokec9 '|'\cf4 \strokec4 , \cf11 \strokec11 1\cf4 \strokec4 )\cb1 \
+\cb3                     \cf2 \strokec2 if\cf4 \strokec4  \cf11 \strokec11 0\cf4 \strokec4  \cf8 \strokec8 <=\cf4 \strokec4  \cf7 \strokec7 idx\cf4 \strokec4  \cf8 \strokec8 <\cf4 \strokec4  \cf6 \strokec6 len\cf4 \strokec4 (\cf7 \strokec7 titles\cf4 \strokec4 ):\cb1 \
+\cb3                         \cf7 \strokec7 result\cf4 \strokec4 [\cf7 \strokec7 titles\cf4 \strokec4 [\cf7 \strokec7 idx\cf4 \strokec4 ]] \cf8 \strokec8 =\cf4 \strokec4  \{\cb1 \
+\cb3                             \cf9 \strokec9 'pinyin'\cf4 \strokec4 : \cf7 \strokec7 pinyin\cf4 \strokec4 .strip(),\cb1 \
+\cb3                             \cf9 \strokec9 'english'\cf4 \strokec4 : \cf7 \strokec7 english\cf4 \strokec4 .strip()\cb1 \
+\cb3                         \}\cb1 \
+\cb3             \cf2 \strokec2 except\cf4 \strokec4  (\cf5 \strokec5 ValueError\cf4 \strokec4 , \cf5 \strokec5 IndexError\cf4 \strokec4 ):\cb1 \
+\cb3                 \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 result\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 except\cf4 \strokec4  \cf5 \strokec5 Exception\cf4 \strokec4  \cf2 \strokec2 as\cf4 \strokec4  \cf7 \strokec7 e\cf4 \strokec4 :\cb1 \
+\cb3         \cf6 \strokec6 print\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 "Error batch translating: \cf10 \strokec10 \{\cf7 \strokec7 e\cf10 \strokec10 \}\cf9 \strokec9 "\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \{\}\cb1 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 batch_translate_words\cf4 \strokec4 (\cf7 \strokec7 words\cf4 \strokec4 : \cf5 \strokec5 List\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 ]) -> \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 str\cf4 \strokec4 ]]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Translate multiple Chinese words in a single API call. Returns dict mapping word -> \{pinyin, english\}"""\cf4 \cb1 \strokec4 \
+\cb3     \cf7 \strokec7 gemini_client\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 get_gemini_client\cf4 \strokec4 ()\cb1 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 gemini_client\cf4 \strokec4  \cf10 \strokec10 or\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 words\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \{\}\cb1 \
+\
+\cb3     \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 words_text\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf9 \strokec9 "\cf14 \strokec14 \\n\cf9 \strokec9 "\cf4 \strokec4 .\cf6 \strokec6 join\cf4 \strokec4 ([\cf10 \strokec10 f\cf9 \strokec9 "\cf10 \strokec10 \{\cf7 \strokec7 i\cf8 \strokec8 +\cf11 \strokec11 1\cf10 \strokec10 \}\cf9 \strokec9 . \cf10 \strokec10 \{\cf7 \strokec7 w\cf10 \strokec10 \}\cf9 \strokec9 "\cf4 \strokec4  \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 i\cf4 \strokec4 , \cf7 \strokec7 w\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf5 \strokec5 enumerate\cf4 \strokec4 (\cf7 \strokec7 words\cf4 \strokec4 )])\cb1 \
+\cb3         \cf7 \strokec7 prompt\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 f\cf9 \strokec9 """For each Chinese word/phrase below, provide:\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf9 \cb3 \strokec9 1. Pinyin with tone marks\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9 2. Concise English translation (2-5 words max)\cf4 \cb1 \strokec4 \
+\
+\cf9 \cb3 \strokec9 Format each response as:\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9 [number]. [pinyin] | [english]\cf4 \cb1 \strokec4 \
+\
+\cf9 \cb3 \strokec9 Words:\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 \{\cf7 \strokec7 words_text\cf10 \strokec10 \}\cf9 \strokec9 """\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3         \cf7 \strokec7 response\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 gemini_client\cf4 \strokec4 .models.generate_content(\cb1 \
+\cb3             \cf7 \strokec7 model\cf8 \strokec8 =\cf9 \strokec9 "gemini-2.0-flash"\cf4 \strokec4 ,\cb1 \
+\cb3             \cf7 \strokec7 contents\cf8 \strokec8 =\cf7 \strokec7 prompt\cf4 \cb1 \strokec4 \
+\cb3         )\cb1 \
+\
+\cb3         \cf7 \strokec7 result\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\}\cb1 \
+\cb3         \cf7 \strokec7 lines\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 response\cf4 \strokec4 .text.strip().split(\cf9 \strokec9 '\cf14 \strokec14 \\n\cf9 \strokec9 '\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 lines\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 line\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 .strip()\cb1 \
+\cb3             \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4  \cf10 \strokec10 or\cf4 \strokec4  \cf9 \strokec9 '|'\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 :\cb1 \
+\cb3                 \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\cb3             \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3                 \cf7 \strokec7 parts\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 .split(\cf9 \strokec9 '.'\cf4 \strokec4 , \cf11 \strokec11 1\cf4 \strokec4 )\cb1 \
+\cb3                 \cf2 \strokec2 if\cf4 \strokec4  \cf6 \strokec6 len\cf4 \strokec4 (\cf7 \strokec7 parts\cf4 \strokec4 ) \cf8 \strokec8 <\cf4 \strokec4  \cf11 \strokec11 2\cf4 \strokec4 :\cb1 \
+\cb3                     \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\cb3                 \cf7 \strokec7 idx\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 int\cf4 \strokec4 (\cf7 \strokec7 parts\cf4 \strokec4 [\cf11 \strokec11 0\cf4 \strokec4 ].strip()) \cf8 \strokec8 -\cf4 \strokec4  \cf11 \strokec11 1\cf4 \cb1 \strokec4 \
+\cb3                 \cf7 \strokec7 rest\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 parts\cf4 \strokec4 [\cf11 \strokec11 1\cf4 \strokec4 ].strip()\cb1 \
+\cb3                 \cf2 \strokec2 if\cf4 \strokec4  \cf9 \strokec9 '|'\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 rest\cf4 \strokec4 :\cb1 \
+\cb3                     \cf7 \strokec7 pinyin\cf4 \strokec4 , \cf7 \strokec7 english\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 rest\cf4 \strokec4 .split(\cf9 \strokec9 '|'\cf4 \strokec4 , \cf11 \strokec11 1\cf4 \strokec4 )\cb1 \
+\cb3                     \cf2 \strokec2 if\cf4 \strokec4  \cf11 \strokec11 0\cf4 \strokec4  \cf8 \strokec8 <=\cf4 \strokec4  \cf7 \strokec7 idx\cf4 \strokec4  \cf8 \strokec8 <\cf4 \strokec4  \cf6 \strokec6 len\cf4 \strokec4 (\cf7 \strokec7 words\cf4 \strokec4 ):\cb1 \
+\cb3                         \cf7 \strokec7 result\cf4 \strokec4 [\cf7 \strokec7 words\cf4 \strokec4 [\cf7 \strokec7 idx\cf4 \strokec4 ]] \cf8 \strokec8 =\cf4 \strokec4  \{\cb1 \
+\cb3                             \cf9 \strokec9 'pinyin'\cf4 \strokec4 : \cf7 \strokec7 pinyin\cf4 \strokec4 .strip(),\cb1 \
+\cb3                             \cf9 \strokec9 'english'\cf4 \strokec4 : \cf7 \strokec7 english\cf4 \strokec4 .strip()\cb1 \
+\cb3                         \}\cb1 \
+\cb3             \cf2 \strokec2 except\cf4 \strokec4  (\cf5 \strokec5 ValueError\cf4 \strokec4 , \cf5 \strokec5 IndexError\cf4 \strokec4 ):\cb1 \
+\cb3                 \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 result\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 except\cf4 \strokec4  \cf5 \strokec5 Exception\cf4 \strokec4  \cf2 \strokec2 as\cf4 \strokec4  \cf7 \strokec7 e\cf4 \strokec4 :\cb1 \
+\cb3         \cf6 \strokec6 print\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 "Error batch translating words: \cf10 \strokec10 \{\cf7 \strokec7 e\cf10 \strokec10 \}\cf9 \strokec9 "\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \{\}\cb1 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 get_article_translations\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 , \cf7 \strokec7 vocabulary\cf4 \strokec4 : \cf5 \strokec5 Set\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 ]) -> \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 str\cf4 \strokec4 ]]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Get translations for ALL Chinese words in text. Uses DB first for vocab, then cache, then Gemini."""\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 text\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \{\}\cb1 \
+\
+\cb3     \cf7 \strokec7 segments\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 segment_text\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 unique_chinese_words\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 set\cf4 \strokec4 ()\cb1 \
+\
+\cb3     \cf2 \strokec2 import\cf4 \strokec4  \cf5 \strokec5 re\cf4 \cb1 \strokec4 \
+\cb3     \cf7 \strokec7 chinese_pattern\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 re\cf4 \strokec4 .\cf6 \strokec6 compile\cf4 \strokec4 (\cf10 \strokec10 r\cf15 \strokec15 '\cf9 \strokec9 [\cf10 \strokec10 \\u4e00\cf15 \strokec15 -\cf10 \strokec10 \\u9fff\cf9 \strokec9 ]\cf15 \strokec15 '\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 segments\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 chinese_pattern\cf4 \strokec4 .\cf6 \strokec6 search\cf4 \strokec4 (\cf7 \strokec7 segment\cf4 \strokec4 ):\cb1 \
+\cb3             \cf7 \strokec7 unique_chinese_words\cf4 \strokec4 .\cf6 \strokec6 add\cf4 \strokec4 (\cf7 \strokec7 segment\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 unique_chinese_words\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \{\}\cb1 \
+\
+\cb3     \cf7 \strokec7 translations\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\}\cb1 \
+\cb3     \cf7 \strokec7 words_needing_lookup\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  []\cb1 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 word\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 unique_chinese_words\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 word\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 vocabulary\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 details\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 get_word_details\cf4 \strokec4 (\cf7 \strokec7 word\cf4 \strokec4 )\cb1 \
+\cb3             \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 details\cf4 \strokec4  \cf10 \strokec10 and\cf4 \strokec4  \cf7 \strokec7 details\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'pinyin'\cf4 \strokec4 ) \cf10 \strokec10 and\cf4 \strokec4  \cf7 \strokec7 details\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'english'\cf4 \strokec4 ):\cb1 \
+\cb3                 \cf7 \strokec7 translations\cf4 \strokec4 [\cf7 \strokec7 word\cf4 \strokec4 ] \cf8 \strokec8 =\cf4 \strokec4  \{\cb1 \
+\cb3                     \cf9 \strokec9 'pinyin'\cf4 \strokec4 : \cf7 \strokec7 details\cf4 \strokec4 [\cf9 \strokec9 'pinyin'\cf4 \strokec4 ],\cb1 \
+\cb3                     \cf9 \strokec9 'english'\cf4 \strokec4 : \cf7 \strokec7 details\cf4 \strokec4 [\cf9 \strokec9 'english'\cf4 \strokec4 ]\cb1 \
+\cb3                 \}\cb1 \
+\cb3                 \cf2 \strokec2 continue\cf4 \cb1 \strokec4 \
+\cb3         \cf7 \strokec7 words_needing_lookup\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf7 \strokec7 word\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 words_needing_lookup\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 cached\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 database\cf4 \strokec4 .\cf6 \strokec6 get_cached_translations_batch\cf4 \strokec4 (\cf7 \strokec7 words_needing_lookup\cf4 \strokec4 )\cb1 \
+\cb3         \cf7 \strokec7 translations\cf4 \strokec4 .\cf6 \strokec6 update\cf4 \strokec4 (\cf7 \strokec7 cached\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf7 \strokec7 words_needing_gemini\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  [\cf7 \strokec7 w\cf4 \strokec4  \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 w\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 words_needing_lookup\cf4 \strokec4  \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 w\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 cached\cf4 \strokec4 ]\cb1 \
+\
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 words_needing_gemini\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 gemini_translations\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 batch_translate_words\cf4 \strokec4 (\cf7 \strokec7 words_needing_gemini\cf4 \strokec4 )\cb1 \
+\cb3             \cf7 \strokec7 translations\cf4 \strokec4 .\cf6 \strokec6 update\cf4 \strokec4 (\cf7 \strokec7 gemini_translations\cf4 \strokec4 )\cb1 \
+\
+\cb3             \cf5 \strokec5 database\cf4 \strokec4 .\cf6 \strokec6 cache_translations_batch\cf4 \strokec4 (\cf7 \strokec7 gemini_translations\cf4 \strokec4 , \cf7 \strokec7 source\cf8 \strokec8 =\cf9 \strokec9 'gemini'\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 translations\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 generate_interlinear_html\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 , \cf7 \strokec7 translations\cf4 \strokec4 : \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 str\cf4 \strokec4 ]]) -> \cf5 \strokec5 str\cf4 \strokec4 :\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Generate HTML with interlinear pinyin and English for the full article"""\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 text\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf9 \strokec9 ""\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf7 \strokec7 segments\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 segment_text\cf4 \strokec4 (\cf7 \strokec7 text\cf4 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 html_parts\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  []\cb1 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 segments\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf8 \strokec8 ==\cf4 \strokec4  \cf9 \strokec9 '\cf14 \strokec14 \\n\cf9 \strokec9 '\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 html_parts\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf9 \strokec9 '<br>'\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 elif\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4 .\cf6 \strokec6 strip\cf4 \strokec4 () \cf8 \strokec8 ==\cf4 \strokec4  \cf9 \strokec9 ''\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 html_parts\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf7 \strokec7 segment\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 elif\cf4 \strokec4  \cf7 \strokec7 segment\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 translations\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 trans\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 translations\cf4 \strokec4 [\cf7 \strokec7 segment\cf4 \strokec4 ]\cb1 \
+\cb3             \cf7 \strokec7 pinyin\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 trans\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'pinyin'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 )\cb1 \
+\cb3             \cf7 \strokec7 english\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 trans\cf4 \strokec4 .\cf6 \strokec6 get\cf4 \strokec4 (\cf9 \strokec9 'english'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 )\cb1 \
+\cb3             \cf7 \strokec7 html_parts\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 '''<span class="interlinear">\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf9 \cb3 \strokec9                 <span class="chinese">\cf10 \strokec10 \{\cf7 \strokec7 segment\cf10 \strokec10 \}\cf9 \strokec9 </span>\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9                 <span class="pinyin">\cf10 \strokec10 \{\cf7 \strokec7 pinyin\cf10 \strokec10 \}\cf9 \strokec9 </span>\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9                 <span class="english">\cf10 \strokec10 \{\cf7 \strokec7 english\cf10 \strokec10 \}\cf9 \strokec9 </span>\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9             </span>'''\cf4 \strokec4 )\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3         \cf2 \strokec2 else\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 html_parts\cf4 \strokec4 .\cf6 \strokec6 append\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 '<span class="plain-text">\cf10 \strokec10 \{\cf7 \strokec7 segment\cf10 \strokec10 \}\cf9 \strokec9 </span>'\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \cf9 \strokec9 ''\cf4 \strokec4 .\cf6 \strokec6 join\cf4 \strokec4 (\cf7 \strokec7 html_parts\cf4 \strokec4 )\cb1 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 translate_title\cf4 \strokec4 (\cf7 \strokec7 chinese_title\cf4 \strokec4 : \cf5 \strokec5 str\cf4 \strokec4 ) -> \cf5 \strokec5 Optional\cf4 \strokec4 [\cf5 \strokec5 Dict\cf4 \strokec4 [\cf5 \strokec5 str\cf4 \strokec4 , \cf5 \strokec5 str\cf4 \strokec4 ]]:\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf7 \strokec7 gemini_client\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 get_gemini_client\cf4 \strokec4 ()\cb1 \
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 gemini_client\cf4 \strokec4  \cf10 \strokec10 or\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 chinese_title\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 try\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 prompt\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf10 \strokec10 f\cf9 \strokec9 """For this Chinese title, provide:\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf9 \cb3 \strokec9 1. Pinyin with tone marks (not numbers)\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9 2. English translation\cf4 \cb1 \strokec4 \
+\
+\cf9 \cb3 \strokec9 Title: \cf10 \strokec10 \{\cf7 \strokec7 chinese_title\cf10 \strokec10 \}\cf4 \cb1 \strokec4 \
+\
+\cf9 \cb3 \strokec9 Respond in exactly this format (no extra text):\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9 Pinyin: [pinyin here]\cf4 \cb1 \strokec4 \
+\cf9 \cb3 \strokec9 English: [english here]"""\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3         \cf7 \strokec7 response\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 gemini_client\cf4 \strokec4 .models.generate_content(\cb1 \
+\cb3             \cf7 \strokec7 model\cf8 \strokec8 =\cf9 \strokec9 "gemini-2.5-pro"\cf4 \strokec4 ,\cb1 \
+\cb3             \cf7 \strokec7 contents\cf8 \strokec8 =\cf7 \strokec7 prompt\cf4 \cb1 \strokec4 \
+\cb3         )\cb1 \
+\
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 response\cf4 \strokec4 .text:\cb1 \
+\cb3             \cf7 \strokec7 lines\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 response\cf4 \strokec4 .text.strip().split(\cf9 \strokec9 '\cf14 \strokec14 \\n\cf9 \strokec9 '\cf4 \strokec4 )\cb1 \
+\cb3             \cf7 \strokec7 result\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \{\}\cb1 \
+\cb3             \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf7 \strokec7 lines\cf4 \strokec4 :\cb1 \
+\cb3                 \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 .startswith(\cf9 \strokec9 'Pinyin:'\cf4 \strokec4 ):\cb1 \
+\cb3                     \cf7 \strokec7 result\cf4 \strokec4 [\cf9 \strokec9 'pinyin'\cf4 \strokec4 ] \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 .replace(\cf9 \strokec9 'Pinyin:'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 ).strip()\cb1 \
+\cb3                 \cf2 \strokec2 elif\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 .startswith(\cf9 \strokec9 'English:'\cf4 \strokec4 ):\cb1 \
+\cb3                     \cf7 \strokec7 result\cf4 \strokec4 [\cf9 \strokec9 'english'\cf4 \strokec4 ] \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 line\cf4 \strokec4 .replace(\cf9 \strokec9 'English:'\cf4 \strokec4 , \cf9 \strokec9 ''\cf4 \strokec4 ).strip()\cb1 \
+\
+\cb3             \cf2 \strokec2 if\cf4 \strokec4  \cf9 \strokec9 'pinyin'\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 result\cf4 \strokec4  \cf10 \strokec10 and\cf4 \strokec4  \cf9 \strokec9 'english'\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 result\cf4 \strokec4 :\cb1 \
+\cb3                 \cf2 \strokec2 return\cf4 \strokec4  \cf7 \strokec7 result\cf4 \cb1 \strokec4 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 except\cf4 \strokec4  \cf5 \strokec5 Exception\cf4 \strokec4  \cf2 \strokec2 as\cf4 \strokec4  \cf7 \strokec7 e\cf4 \strokec4 :\cb1 \
+\cb3         \cf6 \strokec6 print\cf4 \strokec4 (\cf10 \strokec10 f\cf9 \strokec9 "Error translating title: \cf10 \strokec10 \{\cf7 \strokec7 e\cf10 \strokec10 \}\cf9 \strokec9 "\cf4 \strokec4 )\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \cf10 \strokec10 None\cf4 \cb1 \strokec4 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf12 \cb3 \strokec12 HSK_COMMON_WORDS\cf4 \cb3 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  [\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 "\uc0\u30340 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u19968 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26159 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u19981 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20102 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22312 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20154 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26377 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25105 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20182 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u36825 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20013 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22823 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26469 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u19978 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22269 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20010 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21040 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u35828 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20204 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u20026 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23376 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21644 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20320 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22320 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20986 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36947 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20063 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26102 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u24180 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u24471 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23601 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u37027 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u35201 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u19979 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20197 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u29983 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20250 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u33258 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u30528 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u21435 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20043 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36807 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23478 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23398 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23545 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21487 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22905 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u37324 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21518 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u23567 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20040 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u24515 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22810 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22825 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u32780 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u33021 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22909 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u37117 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u28982 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u27809 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26085 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20110 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36215 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36824 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21457 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25104 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20107 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21482 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20316 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u24403 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u24819 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u30475 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25991 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26080 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u24320 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25163 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21313 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u29992 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20027 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u34892 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26041 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21448 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22914 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21069 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25152 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26412 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u35265 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u32463 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22836 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u38754 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22806 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20004 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u39640 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21516 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25226 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26426 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u29616 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20570 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u34987 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u20170 \u22825 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26126 \u22825 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26152 \u22825 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u29616 \u22312 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26102 \u20505 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u24037 \u20316 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23398 \u20064 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20013 \u22269 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u32654 \u22269 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20844 \u21496 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u32463 \u27982 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u24066 \u22330 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21457 \u23637 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25919 \u24220 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u31038 \u20250 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u38382 \u39064 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u30740 \u31350 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25216 \u26415 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u19990 \u30028 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22269 \u23478 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u20225 \u19994 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25237 \u36164 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36152 \u26131 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u37329 \u34701 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u38134 \u34892 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22686 \u38271 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20135 \u19994 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u31185 \u25216 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21019 \u26032 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25913 \u38761 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u25919 \u31574 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u31649 \u29702 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26381 \u21153 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20449 \u24687 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25968 \u25454 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20114 \u32852 \u32593 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u30005 \u23376 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21830 \u21697 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u28040 \u36153 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20215 \u26684 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u25910 \u20837 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25104 \u26412 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21033 \u28070 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36164 \u26412 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u32929 \u31080 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20538 \u21048 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36135 \u24065 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21033 \u29575 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u27719 \u29575 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36890 \u36135 \u33192 \u32960 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u20986 \u21475 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36827 \u21475 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20851 \u31246 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21327 \u35758 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21512 \u20316 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u31454 \u20105 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20135 \u21697 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23458 \u25143 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20379 \u24212 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u38656 \u27714 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u21046 \u36896 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u29983 \u20135 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u38144 \u21806 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u33829 \u38144 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21697 \u29260 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36136 \u37327 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25928 \u29575 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u39033 \u30446 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u35745 \u21010 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u30446 \u26631 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u25112 \u30053 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u39118 \u38505 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26426 \u20250 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25361 \u25112 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u35299 \u20915 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20998 \u26512 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25253 \u21578 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20250 \u35758 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20915 \u23450 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u24433 \u21709 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u37325 \u35201 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26032 \u38395 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u28040 \u24687 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u35760 \u32773 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25253 \u36947 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u37319 \u35775 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u35780 \u35770 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u35266 \u28857 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u19987 \u23478 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23398 \u32773 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u25945 \u25480 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22823 \u23398 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23398 \u29983 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25945 \u32946 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25991 \u21270 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21382 \u21490 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u31185 \u23398 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u21307 \u23398 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20581 \u24247 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u29615 \u22659 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u33021 \u28304 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36164 \u28304 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20892 \u19994 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22478 \u24066 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22320 \u21306 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20154 \u21475 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23478 \u24237 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u23401 \u23376 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u29238 \u27597 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u26379 \u21451 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u29983 \u27963 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u24037 \u36164 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25151 \u23376 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u27773 \u36710 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25163 \u26426 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u30005 \u33041 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u32593 \u32476 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u28216 \u25103 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u38899 \u20048 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u30005 \u24433 "\cf4 \strokec4 ,\cb1 \
+\cb3     \cf9 \strokec9 "\uc0\u20307 \u32946 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36275 \u29699 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u31726 \u29699 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36816 \u21160 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u27604 \u36187 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u20896 \u20891 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u36873 \u25163 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25945 \u32451 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u22242 \u38431 "\cf4 \strokec4 , \cf9 \strokec9 "\uc0\u25104 \u32489 "\cf4 \cb1 \strokec4 \
+\cb3 ]\cb1 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf10 \cb3 \strokec10 def\cf4 \strokec4  \cf6 \strokec6 populate_common_words_cache\cf4 \strokec4 (\cf7 \strokec7 progress_callback\cf8 \strokec8 =\cf10 \strokec10 None\cf4 \strokec4 ):\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf9 \strokec9 """Populate the word cache with common Chinese words using Gemini.\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf9 \cb3 \strokec9     progress_callback: optional function(current, total, message) to report progress"""\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  gemini_client:\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \{\cf9 \strokec9 'success'\cf4 \strokec4 : \cf10 \strokec10 False\cf4 \strokec4 , \cf9 \strokec9 'error'\cf4 \strokec4 : \cf9 \strokec9 'Gemini API not configured'\cf4 \strokec4 \}\cb1 \
+\
+\cb3     \cf7 \strokec7 existing\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf5 \strokec5 database\cf4 \strokec4 .\cf6 \strokec6 get_cached_translations_batch\cf4 \strokec4 (\cf12 \cb3 \strokec12 HSK_COMMON_WORDS\cf4 \cb3 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 words_to_translate\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  [\cf7 \strokec7 w\cf4 \strokec4  \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 w\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf12 \cb3 \strokec12 HSK_COMMON_WORDS\cf4 \cb3 \strokec4  \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 w\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf10 \strokec10 in\cf4 \strokec4  \cf7 \strokec7 existing\cf4 \strokec4 ]\cb1 \
+\
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf10 \strokec10 not\cf4 \strokec4  \cf7 \strokec7 words_to_translate\cf4 \strokec4 :\cb1 \
+\cb3         \cf2 \strokec2 return\cf4 \strokec4  \{\cf9 \strokec9 'success'\cf4 \strokec4 : \cf10 \strokec10 True\cf4 \strokec4 , \cf9 \strokec9 'message'\cf4 \strokec4 : \cf9 \strokec9 'All common words already cached'\cf4 \strokec4 , \cf9 \strokec9 'added'\cf4 \strokec4 : \cf11 \strokec11 0\cf4 \strokec4 \}\cb1 \
+\
+\cb3     \cf7 \strokec7 total_words\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 len\cf4 \strokec4 (\cf7 \strokec7 words_to_translate\cf4 \strokec4 )\cb1 \
+\cb3     \cf7 \strokec7 batch_size\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf11 \strokec11 50\cf4 \cb1 \strokec4 \
+\cb3     \cf7 \strokec7 added_count\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf11 \strokec11 0\cf4 \cb1 \strokec4 \
+\
+\cb3     \cf2 \strokec2 for\cf4 \strokec4  \cf7 \strokec7 i\cf4 \strokec4  \cf2 \strokec2 in\cf4 \strokec4  \cf5 \strokec5 range\cf4 \strokec4 (\cf11 \strokec11 0\cf4 \strokec4 , \cf7 \strokec7 total_words\cf4 \strokec4 , \cf7 \strokec7 batch_size\cf4 \strokec4 ):\cb1 \
+\cb3         \cf7 \strokec7 batch\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf7 \strokec7 words_to_translate\cf4 \strokec4 [\cf7 \strokec7 i\cf4 \strokec4 :\cf7 \strokec7 i\cf4 \strokec4  \cf8 \strokec8 +\cf4 \strokec4  \cf7 \strokec7 batch_size\cf4 \strokec4 ]\cb1 \
+\
+\cb3         \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 progress_callback\cf4 \strokec4 :\cb1 \
+\cb3             \cf7 \strokec7 progress_callback\cf4 \strokec4 (\cf7 \strokec7 i\cf4 \strokec4 , \cf7 \strokec7 total_words\cf4 \strokec4 , \cf10 \strokec10 f\cf9 \strokec9 "Translating batch \cf10 \strokec10 \{\cf7 \strokec7 i\cf8 \strokec8 //\cf7 \strokec7 batch_size\cf4 \strokec4  \cf8 \strokec8 +\cf4 \strokec4  \cf11 \strokec11 1\cf10 \strokec10 \}\cf9 \strokec9 ..."\cf4 \strokec4 )\cb1 \
+\
+\cb3         \cf7 \strokec7 translations\cf4 \strokec4  \cf8 \strokec8 =\cf4 \strokec4  \cf6 \strokec6 batch_translate_words\cf4 \strokec4 (\cf7 \strokec7 batch\cf4 \strokec4 )\cb1 \
+\cb3         \cf5 \strokec5 database\cf4 \strokec4 .\cf6 \strokec6 cache_translations_batch\cf4 \strokec4 (\cf7 \strokec7 translations\cf4 \strokec4 , \cf7 \strokec7 source\cf8 \strokec8 =\cf9 \strokec9 'hsk_common'\cf4 \strokec4 )\cb1 \
+\cb3         \cf7 \strokec7 added_count\cf4 \strokec4  \cf8 \strokec8 +=\cf4 \strokec4  \cf6 \strokec6 len\cf4 \strokec4 (\cf7 \strokec7 translations\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 if\cf4 \strokec4  \cf7 \strokec7 progress_callback\cf4 \strokec4 :\cb1 \
+\cb3         \cf7 \strokec7 progress_callback\cf4 \strokec4 (\cf7 \strokec7 total_words\cf4 \strokec4 , \cf7 \strokec7 total_words\cf4 \strokec4 , \cf9 \strokec9 "Complete!"\cf4 \strokec4 )\cb1 \
+\
+\cb3     \cf2 \strokec2 return\cf4 \strokec4  \{\cf9 \strokec9 'success'\cf4 \strokec4 : \cf10 \strokec10 True\cf4 \strokec4 , \cf9 \strokec9 'message'\cf4 \strokec4 : \cf10 \strokec10 f\cf9 \strokec9 'Added \cf10 \strokec10 \{\cf7 \strokec7 added_count\cf10 \strokec10 \}\cf9 \strokec9  words to cache'\cf4 \strokec4 , \cf9 \strokec9 'added'\cf4 \strokec4 : \cf7 \strokec7 added_count\cf4 \strokec4 \}\cb1 \
+\
+}

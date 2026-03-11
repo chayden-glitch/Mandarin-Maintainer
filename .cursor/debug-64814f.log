@@ -1,0 +1,2 @@
+{"sessionId":"64814f","location":"routes.ts:register","message":"template user lookup result","data":{"templateUser":{"id":2,"email":"template@local"},"newUserId":7},"timestamp":1772346963284,"hypothesisId":"A,B"}
+{"sessionId":"64814f","location":"routes.ts:register","message":"seed error caught","data":{"error":"error: column \"user_id\" does not exist"},"timestamp":1772346963317,"hypothesisId":"A"}
