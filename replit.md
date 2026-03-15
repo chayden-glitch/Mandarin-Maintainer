@@ -49,6 +49,11 @@ A personal Chinese (Mandarin) learning app that helps maintain and grow vocabula
 - Build command: `npm run build`
 - Run command: `node dist/index.cjs`
 
+## Production Seeding
+- `server/seed.ts` auto-seeds vocabulary, cards, and HSK words on startup if tables are empty
+- `server/seed-data.json` contains the seed data (1,060 vocab from "China from Different Perspectives" + "Digital Chinese", 2,120 cards, 7,178 HSK words)
+- Seed is a no-op when data already exists (checks vocabulary count > 0 and HSK count > 7000)
+
 ## Notes
 - The dev script does NOT use a `.env` file; all env vars come from Replit's environment
 - Vite runs in middleware mode (embedded in Express) in development
