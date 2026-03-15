@@ -29,6 +29,16 @@ function getTodayStr(tzOffset?: number): string {
   return now.toISOString().split("T")[0];
 }
 
+function getYesterdayStr(tzOffset?: number): string {
+  const now = new Date();
+  if (tzOffset !== undefined && !isNaN(tzOffset)) {
+    const clientTime = new Date(now.getTime() - tzOffset * 60 * 1000 - 24 * 60 * 60 * 1000);
+    return clientTime.toISOString().split("T")[0];
+  }
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  return yesterday.toISOString().split("T")[0];
+}
+
 export interface ReviewStats {
   dueCount: number;
   totalCards: number;
@@ -605,8 +615,15 @@ export class DatabaseStorage implements IStorage {
         .set({ cardsReviewed: (existing.cardsReviewed || 0) + cardsReviewed })
         .where(eq(reviewStreaks.date, today));
     } else {
-      const [lastStreak] = await db.select().from(reviewStreaks).orderBy(desc(reviewStreaks.date)).limit(1);
-      const newStreak = lastStreak ? (lastStreak.streakCount || 0) + 1 : 1;
+      const [lastStreak] = await db
+        .select()
+        .from(reviewStreaks)
+        .orderBy(desc(reviewStreaks.date))
+        .limit(1);
+
+      const yesterday = getYesterdayStr(tzOffset);
+      const isConsecutive = lastStreak?.date === yesterday;
+      const newStreak = isConsecutive ? (lastStreak.streakCount || 0) + 1 : 1;
 
       await db.insert(reviewStreaks).values({
         date: today,
