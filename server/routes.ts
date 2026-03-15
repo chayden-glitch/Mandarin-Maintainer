@@ -136,13 +136,20 @@ export async function registerRoutes(server: Server, app: Express): Promise<void
     res.json(cards);
   });
 
-  app.get("/api/review/custom", async (req: Request, res: Response) => {
-    const rawSources = req.query.sources;
-    const rawLessons = req.query.lessons;
-    const sources = Array.isArray(rawSources) ? rawSources : rawSources ? [rawSources] : [];
-    const lessonStrs = Array.isArray(rawLessons) ? rawLessons : rawLessons ? [rawLessons] : [];
-    const lessons = lessonStrs.map((s) => parseInt(String(s), 10)).filter((n) => !isNaN(n));
-    const cards = await storage.getCustomPracticeCards(sources as string[], lessons);
+  app.post("/api/review/custom", async (req: Request, res: Response) => {
+    const body = req.body as { sourceLessons?: Record<string, number[]> };
+    const sourceLessons = body?.sourceLessons ?? {};
+    if (typeof sourceLessons !== "object" || Array.isArray(sourceLessons)) {
+      res.status(400).json({ message: "sourceLessons object required" });
+      return;
+    }
+    const normalized: Record<string, number[]> = {};
+    for (const [source, lessons] of Object.entries(sourceLessons)) {
+      if (typeof source !== "string") continue;
+      const arr = Array.isArray(lessons) ? lessons : [];
+      normalized[source] = arr.map((l) => Number(l)).filter((n) => !isNaN(n));
+    }
+    const cards = await storage.getCustomPracticeCards(normalized);
     res.json(cards);
   });
 

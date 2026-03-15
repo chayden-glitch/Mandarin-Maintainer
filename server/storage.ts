@@ -54,7 +54,7 @@ export interface IStorage {
   syncCards(): Promise<number>;
   getDueCards(limit: number, tzOffset?: number): Promise<CardWithVocabulary[]>;
   getPracticeCards(limit: number): Promise<CardWithVocabulary[]>;
-  getCustomPracticeCards(sources: string[], lessons: number[]): Promise<CardWithVocabulary[]>;
+  getCustomPracticeCards(sourceLessons: Record<string, number[]>): Promise<CardWithVocabulary[]>;
   getCardById(id: number): Promise<Card | undefined>;
   updateCard(id: number, updates: Partial<Card>): Promise<void>;
   buryCardVocabulary(cardId: number): Promise<void>;
@@ -365,17 +365,20 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getCustomPracticeCards(sources: string[], lessons: number[]): Promise<CardWithVocabulary[]> {
+  async getCustomPracticeCards(sourceLessons: Record<string, number[]>): Promise<CardWithVocabulary[]> {
+    const sources = Object.keys(sourceLessons);
     if (sources.length === 0) return [];
     const allVocab = await db.select().from(vocabulary).where(or(eq(vocabulary.buried, false), isNull(vocabulary.buried)));
     const filteredVocab = allVocab.filter((w) => {
       const wSources = w.source || [];
       const wLessons = w.lessonNumber || [];
-      const hasMatchingSource = wSources.some((s) => sources.includes(s));
-      if (!hasMatchingSource) return false;
-      if (lessons.length === 0) return true;
-      for (let i = 0; i < wSources.length; i++) {
-        if (sources.includes(wSources[i]) && wLessons[i] != null && lessons.includes(wLessons[i])) return true;
+      for (const source of sources) {
+        if (!wSources.includes(source)) continue;
+        const selectedLessons = sourceLessons[source];
+        if (selectedLessons.length === 0) return true;
+        for (let i = 0; i < wSources.length; i++) {
+          if (wSources[i] === source && wLessons[i] != null && selectedLessons.includes(wLessons[i])) return true;
+        }
       }
       return false;
     });

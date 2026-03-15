@@ -325,18 +325,20 @@ export default function ReviewPage() {
             cards
           </p>
           <div className="flex flex-col gap-2 pt-4">
-            <Button
-              onClick={() => {
-                if (isCustomPracticeMode && customPracticeFilters) {
-                  startReviewMutation.mutate({ custom: customPracticeFilters });
-                } else {
-                  startReviewMutation.mutate({ practice: isPracticeMode });
-                }
-              }}
-              data-testid="button-review-more"
-            >
-              Review More
-            </Button>
+            {stats?.dueCount === 0 && (
+              <Button
+                onClick={() => {
+                  if (isCustomPracticeMode && customPracticeFilters) {
+                    startReviewMutation.mutate({ custom: customPracticeFilters });
+                  } else {
+                    startReviewMutation.mutate({ practice: isPracticeMode });
+                  }
+                }}
+                data-testid="button-review-more"
+              >
+                Review More
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => {
@@ -737,19 +739,21 @@ export default function ReviewPage() {
             ? `Start Review (${stats.dueCount})`
             : "No Cards Due"}
         </Button>
-        <Button
-          variant="ghost"
-          size="lg"
-          onClick={() => startReviewMutation.mutate({ practice: true })}
-          disabled={
-            !stats || stats.totalCards === 0 || startReviewMutation.isPending
-          }
-          className="w-full h-12 border-2 border-transparent hover:border-muted font-bold text-muted-foreground transition-transform active:scale-95 hover:scale-105"
-          data-testid="button-practice"
-        >
-          <RotateCcw className="w-5 h-5 mr-2" />
-          Review More
-        </Button>
+        {stats?.dueCount === 0 && (
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={() => startReviewMutation.mutate({ practice: true })}
+            disabled={
+              !stats || stats.totalCards === 0 || startReviewMutation.isPending
+            }
+            className="w-full h-12 border-2 border-transparent hover:border-muted font-bold text-muted-foreground transition-transform active:scale-95 hover:scale-105"
+            data-testid="button-practice"
+          >
+            <RotateCcw className="w-5 h-5 mr-2" />
+            Review More
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="lg"
@@ -777,7 +781,7 @@ export default function ReviewPage() {
             <DialogTitle>Custom Practice</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Choose sources and lessons to review. Cards will not affect your FSRS schedule.
+            Choose sources and lessons to review. This review session will not affect your FSRS schedule.
           </p>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
