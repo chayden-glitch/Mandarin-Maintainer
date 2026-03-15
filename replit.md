@@ -51,7 +51,7 @@ A personal Chinese (Mandarin) learning app that helps maintain and grow vocabula
 
 ## Production Seeding
 - `server/seed.ts` auto-seeds vocabulary, cards, and HSK words on startup if tables are empty
-- `server/seed-data.json` contains the seed data (1,060 vocab from "China from Different Perspectives" + "Digital Chinese", 2,120 cards, 7,178 HSK words)
+- `server/seed-data.json` contains the seed data (1,060 vocab from "China from Different Perspectives" + "Digital Chinese", 2,120 cards, 7,178 HSK words exported from dev DB)
 - Seed is a no-op when data already exists (checks vocabulary count > 0 and HSK count > 7000)
 
 ## Notes

@@ -138,10 +138,13 @@ async function seedHskWords() {
 
 export async function seedDatabase() {
   try {
-    await seedVocabulary();
-    await seedCards();
+    const vocabSeeded = await seedVocabulary();
+    if (vocabSeeded) {
+      await seedCards();
+    }
     await seedHskWords();
   } catch (err) {
     log(`Seed error: ${err}`);
+    throw err;
   }
 }
