@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -48,9 +48,8 @@ export default function ReviewPage() {
   const [isPracticeMode, setIsPracticeMode] = useState(false);
   const [isCustomPracticeMode, setIsCustomPracticeMode] = useState(false);
   const [customPickerOpen, setCustomPickerOpen] = useState(false);
-  const [selectedSources, setSelectedSources] = useState<string[]>([]);
-  const [selectedLessons, setSelectedLessons] = useState<number[]>([]);
-  const [customPracticeFilters, setCustomPracticeFilters] = useState<{ sources: string[]; lessons: number[] } | null>(null);
+  const [selectedSourceLessons, setSelectedSourceLessons] = useState<Record<string, number[]>>({});
+  const [customPracticeFilters, setCustomPracticeFilters] = useState<{ sourceLessons: Record<string, number[]> } | null>(null);
   const [autoPlayAudio, setAutoPlayAudio] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editFields, setEditFields] = useState({
@@ -71,6 +70,22 @@ export default function ReviewPage() {
   const { data: words } = useQuery<Vocabulary[]>({
     queryKey: ["/api/vocabulary"],
   });
+
+  const sourceLessonsMap = useMemo(() => {
+    const map = new Map<string, Set<number>>();
+    for (const w of words ?? []) {
+      const wSources = w.source || [];
+      const wLessons = w.lessonNumber || [];
+      for (let i = 0; i < wSources.length; i++) {
+        const src = wSources[i];
+        const lesson = wLessons[i];
+        if (src == null) continue;
+        if (!map.has(src)) map.set(src, new Set());
+        if (typeof lesson === "number" && !isNaN(lesson)) map.get(src)!.add(lesson);
+      }
+    }
+    return map;
+  }, [words]);
 
   useEffect(() => {
     const handleReset = () => {
@@ -95,14 +110,12 @@ export default function ReviewPage() {
 
   const startReviewMutation = useMutation({
     mutationFn: async (
-      payload: { practice: boolean } | { custom: { sources: string[]; lessons: number[] } }
+      payload: { practice: boolean } | { custom: { sourceLessons: Record<string, number[]> } }
     ) => {
       if ("custom" in payload) {
-        const { sources, lessons } = payload.custom;
-        const params = new URLSearchParams();
-        sources.forEach((s) => params.append("sources", s));
-        lessons.forEach((l) => params.append("lessons", String(l)));
-        const res = await apiRequest("GET", `/api/review/custom?${params.toString()}`);
+        const res = await apiRequest("POST", "/api/review/custom", {
+          sourceLessons: payload.custom.sourceLessons,
+        });
         return res.json() as Promise<CardWithVocabulary[]>;
       }
       const url = payload.practice ? "/api/review/practice" : `/api/review/due?tzOffset=${tzOffset}`;
@@ -121,6 +134,7 @@ export default function ReviewPage() {
           setIsCustomPracticeMode(true);
           setCustomPracticeFilters(payload.custom);
           setCustomPickerOpen(false);
+          setSelectedSourceLessons({});
         } else {
           setIsCustomPracticeMode(false);
           setCustomPracticeFilters(null);
@@ -775,7 +789,13 @@ export default function ReviewPage() {
           </p>
         </Card>
       )}
-      <Dialog open={customPickerOpen} onOpenChange={setCustomPickerOpen}>
+      <Dialog
+        open={customPickerOpen}
+        onOpenChange={(open) => {
+          setCustomPickerOpen(open);
+          if (!open) setSelectedSourceLessons({});
+        }}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Custom Practice</DialogTitle>
@@ -783,74 +803,106 @@ export default function ReviewPage() {
           <p className="text-sm text-muted-foreground">
             Choose sources and lessons to review. This review session will not affect your FSRS schedule.
           </p>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Sources</Label>
-              <div className="flex flex-wrap gap-3 max-h-32 overflow-y-auto">
-                {Array.from(new Set(words?.flatMap((w) => w.source || []) ?? [])).sort().map((source) => (
-                  <label key={source} className="flex items-center gap-2 cursor-pointer">
+          <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
+            {Array.from(sourceLessonsMap.keys()).sort().map((source) => {
+              const lessonsForSource = Array.from(sourceLessonsMap.get(source) ?? []).sort((a, b) => a - b);
+              const isSourceSelected = source in selectedSourceLessons;
+              const selectedLessonsForSource = selectedSourceLessons[source] ?? [];
+              const isIndeterminate =
+                lessonsForSource.length > 0 &&
+                selectedLessonsForSource.length > 0 &&
+                selectedLessonsForSource.length < lessonsForSource.length;
+              return (
+                <div key={source} className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <Checkbox
-                      checked={selectedSources.includes(source)}
+                      checked={isSourceSelected}
+                      indeterminate={isIndeterminate}
                       onCheckedChange={(checked) => {
-                        setSelectedSources((prev) =>
-                          checked ? [...prev, source] : prev.filter((s) => s !== source)
-                        );
+                        setSelectedSourceLessons((prev) => {
+                          const next = { ...prev };
+                          if (checked) {
+                            next[source] = [];
+                          } else {
+                            delete next[source];
+                          }
+                          return next;
+                        });
                       }}
                     />
-                    <span className="text-sm">{source}</span>
+                    <span className="text-sm font-medium">
+                      {source}
+                      {lessonsForSource.length > 0 && (
+                        <span className="text-muted-foreground font-normal"> (select for all lessons)</span>
+                      )}
+                    </span>
                   </label>
-                ))}
-                {(!words?.length || Array.from(new Set(words?.flatMap((w) => w.source || []))).length === 0) && (
-                  <p className="text-sm text-muted-foreground">No sources in your vocabulary.</p>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Lessons (optional)</Label>
-              <div className="flex flex-wrap gap-3 max-h-32 overflow-y-auto">
-                {Array.from(
-                  new Set(
-                    (words ?? [])
-                      .filter((w) => {
-                        if (selectedSources.length === 0) return true;
-                        return (w.source || []).some((s) => selectedSources.includes(s));
-                      })
-                      .flatMap((w) => {
-                        const wSources = w.source || [];
-                        const wLessons = w.lessonNumber || [];
-                        return wSources
-                          .map((_, i) => wLessons[i])
-                          .filter((n): n is number => n != null && !isNaN(n));
-                      })
-                  )
-                )
-                  .sort((a, b) => a - b)
-                  .map((lesson) => (
-                    <label key={lesson} className="flex items-center gap-2 cursor-pointer">
-                      <Checkbox
-                        checked={selectedLessons.includes(lesson)}
-                        onCheckedChange={(checked) => {
-                          setSelectedLessons((prev) =>
-                            checked ? [...prev, lesson] : prev.filter((l) => l !== lesson)
-                          );
-                        }}
-                      />
-                      <span className="text-sm">Lesson {lesson}</span>
-                    </label>
-                  ))}
-              </div>
-              <p className="text-xs text-muted-foreground">Leave unchecked for all lessons in selected sources.</p>
-            </div>
-            <p className="text-sm font-medium">
+                  {lessonsForSource.length > 0 && (
+                    <div
+                      className="pl-6 grid grid-cols-3 gap-x-3 gap-y-1 grid-flow-col"
+                      style={{
+                        gridTemplateRows: `repeat(${Math.ceil(lessonsForSource.length / 3)}, auto)`,
+                      }}
+                    >
+                      {lessonsForSource.map((lesson) => (
+                        <label key={lesson} className="flex items-center gap-1.5 cursor-pointer">
+                          <Checkbox
+                            checked={
+                              isSourceSelected &&
+                              (selectedLessonsForSource.length === 0 || selectedLessonsForSource.includes(lesson))
+                            }
+                            onCheckedChange={(checked) => {
+                              setSelectedSourceLessons((prev) => {
+                                const next = { ...prev };
+                                if (!(source in next)) next[source] = [];
+                                const arr = next[source];
+                                if (checked) {
+                                  const newArr = arr.includes(lesson) ? arr : [...arr, lesson].sort((a, b) => a - b);
+                                  const allSelected =
+                                    newArr.length === lessonsForSource.length &&
+                                    lessonsForSource.every((l) => newArr.includes(l));
+                                  next[source] = allSelected ? [] : newArr;
+                                } else {
+                                  const newArr =
+                                    arr.length === 0
+                                      ? lessonsForSource.filter((l) => l !== lesson)
+                                      : arr.filter((l) => l !== lesson);
+                                  if (newArr.length === 0) {
+                                    delete next[source];
+                                  } else {
+                                    next[source] = newArr;
+                                  }
+                                }
+                                return next;
+                              });
+                            }}
+                          />
+                          <span className="text-sm">Lesson {lesson}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {sourceLessonsMap.size === 0 && (
+              <p className="text-sm text-muted-foreground">No sources in your vocabulary.</p>
+            )}
+            <p className="text-sm font-medium pt-2">
               {(() => {
+                const selectedSourcesList = Object.keys(selectedSourceLessons);
                 const filtered = (words ?? []).filter((w) => {
                   const wSources = w.source || [];
                   const wLessons = w.lessonNumber || [];
-                  const hasSource = selectedSources.length === 0 || wSources.some((s) => selectedSources.includes(s));
-                  if (!hasSource) return false;
-                  if (selectedLessons.length === 0) return true;
-                  for (let i = 0; i < wSources.length; i++) {
-                    if (selectedSources.includes(wSources[i]) && wLessons[i] != null && selectedLessons.includes(wLessons[i])) return true;
+                  for (const src of selectedSourcesList) {
+                    if (!wSources.includes(src)) continue;
+                    const selectedLessons = selectedSourceLessons[src];
+                    const lessonsForSource = sourceLessonsMap.get(src);
+                    if (selectedLessons.length === 0) return true;
+                    if (!lessonsForSource?.size) return true;
+                    for (let i = 0; i < wSources.length; i++) {
+                      if (wSources[i] === src && wLessons[i] != null && selectedLessons.includes(wLessons[i])) return true;
+                    }
                   }
                   return false;
                 });
@@ -859,18 +911,24 @@ export default function ReviewPage() {
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCustomPickerOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCustomPickerOpen(false);
+                setSelectedSourceLessons({});
+              }}
+            >
               Cancel
             </Button>
             <Button
               onClick={() => {
-                if (selectedSources.length === 0) {
+                if (Object.keys(selectedSourceLessons).length === 0) {
                   toast({ description: "Select at least one source.", variant: "destructive" });
                   return;
                 }
-                startReviewMutation.mutate({ custom: { sources: selectedSources, lessons: selectedLessons } });
+                startReviewMutation.mutate({ custom: { sourceLessons: selectedSourceLessons } });
               }}
-              disabled={startReviewMutation.isPending || selectedSources.length === 0}
+              disabled={startReviewMutation.isPending || Object.keys(selectedSourceLessons).length === 0}
               data-testid="button-start-custom-session"
             >
               {startReviewMutation.isPending ? "Loading..." : "Start Session"}
