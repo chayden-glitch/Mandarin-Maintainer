@@ -221,6 +221,19 @@ export async function registerRoutes(server: Server, app: Express): Promise<void
         const now = Date.now();
         const ttl = rssFeedCache.hasMissingTranslations ? RETRY_CACHE_TTL : RSS_CACHE_TTL;
         if (now - rssFeedCache.timestamp < ttl) {
+          const uncounted = rssFeedCache.data.filter((a) => a.vocabCount === undefined);
+          if (uncounted.length > 0) {
+            await Promise.all(
+              uncounted.map(async (article) => {
+                try {
+                  const cached = await storage.getArticleCache(article.link);
+                  if (cached?.vocabMatches) {
+                    article.vocabCount = cached.vocabMatches.length;
+                  }
+                } catch {}
+              })
+            );
+          }
           return res.json(rssFeedCache.data);
         }
       }
