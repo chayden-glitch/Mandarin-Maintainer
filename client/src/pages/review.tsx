@@ -51,6 +51,7 @@ export default function ReviewPage() {
   const [selectedSourceLessons, setSelectedSourceLessons] = useState<Record<string, number[]>>({});
   const [customPracticeFilters, setCustomPracticeFilters] = useState<{ sourceLessons: Record<string, number[]> } | null>(null);
   const [autoPlayAudio, setAutoPlayAudio] = useState(false);
+  const [sessionDueTarget, setSessionDueTarget] = useState<number | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editFields, setEditFields] = useState({
     simplified: "",
