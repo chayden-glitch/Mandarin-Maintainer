@@ -53,6 +53,7 @@ A personal Chinese (Mandarin) learning app that helps maintain and grow vocabula
 - `server/seed.ts` auto-seeds vocabulary, cards, and HSK words on startup if tables are empty
 - `server/seed-data.json` contains the seed data (1,060 vocab from "China from Different Perspectives" + "Digital Chinese", 2,120 cards, 7,178 HSK words exported from dev DB)
 - Seed is a no-op when data already exists (checks vocabulary count > 0 and HSK count > 7000)
+- Article cache invalidation: on startup, if vocab exists but the `article_cache_vocab_valid` settings flag is missing, all article caches are cleared so they get rebuilt with correct vocabulary highlighting. Flag is set after clearing (one-time operation).
 
 ## Notes
 - The dev script does NOT use a `.env` file; all env vars come from Replit's environment

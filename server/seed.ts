@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { vocabulary, cards, hskWords } from "@shared/schema";
-import { sql } from "drizzle-orm";
+import { vocabulary, cards, hskWords, articleCache as articleCacheTable, settings } from "@shared/schema";
+import { sql, eq } from "drizzle-orm";
 import seedData from "./seed-data.json";
 
 function log(message: string) {
@@ -136,11 +136,29 @@ async function seedHskWords() {
   log(`Seeded ${hskRows.length} HSK words`);
 }
 
+async function clearStaleCaches() {
+  const [vocabCount] = await db.select({ count: sql<number>`count(*)` }).from(vocabulary);
+  if (Number(vocabCount.count) === 0) return;
+
+  const [cacheCount] = await db.select({ count: sql<number>`count(*)` }).from(articleCacheTable);
+  if (Number(cacheCount.count) === 0) return;
+
+  const [flagRow] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, "article_cache_vocab_valid"));
+  if (flagRow?.value === "true") return;
+
+  log(`Article cache predates vocab seeding — clearing ${cacheCount.count} stale cache entries`);
+  await db.delete(articleCacheTable);
+  await db.insert(settings).values({ key: "article_cache_vocab_valid", value: "true" }).onConflictDoUpdate({ target: settings.key, set: { value: "true" } });
+}
+
 export async function seedDatabase() {
   try {
     const vocabSeeded = await seedVocabulary();
     if (vocabSeeded) {
       await seedCards();
+      await db.insert(settings).values({ key: "article_cache_vocab_valid", value: "true" }).onConflictDoUpdate({ target: settings.key, set: { value: "true" } });
+    } else {
+      await clearStaleCaches();
     }
     await seedHskWords();
   } catch (err) {
