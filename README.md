@@ -1,170 +1,59 @@
 # Lingua Boost
 
-Chinese language learning app: spaced repetition (FSRS), vocabulary library, and Chinese news reader with inline word lookup.
-
-**Run locally:** `npm install` then `npm run dev`. Set `DATABASE_URL` (and optional `GEMINI_API_KEY`) in `.env`.
-
----
-
-# Git Guide for Lingua Boost
-
-A simple explainer for the git commands you need to manage this project. Each section explains **what** the command does and **why** you’d use it.
-
----
-
-## The Big Idea
-
-- **Git** tracks changes to your code over time and lets you try ideas on separate “branches” without breaking the main app.
-- **Branch** = a separate line of work. You do new work on a branch, then merge it into `main` when it’s ready.
-- **Commit** = a saved snapshot of your project at a point in time. You commit after a logical chunk of work (e.g. “fix env loading”).
-- **Remote** = the copy of the repo on GitHub (or another host). You **push** your commits to the remote so others can see them and so you have a backup.
-
----
-
-## 1. See Where You Are
-
-**Check which branch you’re on and what’s changed:**
-
-```bash
-git status
-```
-
-- **Branch:** The first line says `On branch main` (or another name). That’s your current branch.
-- **Changes:** It lists modified or new files. “Untracked” = not added to git yet.
-
-**Why:** Run this whenever you’re not sure what branch you’re on or what you’ve changed.
-
----
-
-## 2. Start New Work on a New Branch
-
-**Do this when you’re about to add a feature or fix a bug.** It keeps `main` clean until the work is done.
-
-```bash
-git checkout -b my-feature-name
-```
-
-- **`checkout`** = switch to a branch.
-- **`-b`** = create the branch and switch to it in one step.
-- **`my-feature-name`** = use a short, clear name (e.g. `fix-env-loading`, `custom-practice-mode`).
-
-**Why:** All your new commits go on this branch. `main` doesn’t change until you merge.
-
-**Then:** Make your code changes as usual. When you’re ready to save a snapshot, use the next steps.
-
----
-
-## 3. Save Your Work (Commit)
-
-**Two steps: stage files, then commit.**
-
-**Step 1 – Stage (choose what to include):**
-
-```bash
-git add .
-```
-
-- **`.`** = “all changed files in this folder and below.”  
-  To add only one file: `git add path/to/file.ts`
-
-**Step 2 – Commit (create the snapshot with a message):**
-
-```bash
-git commit -m "Short description of what you did"
-```
-
-- **`-m`** = message. No space between `-m` and the message. Use quotes.
-- Example: `git commit -m "Fix Start Review button payload"`
-
-**Why:** Commits are the history of your project. Good messages make it easy to understand later what each change was for.
-
----
-
-## 4. Send Your Branch to GitHub (Push)
-
-**After you’ve committed**, put your branch on the remote so it’s backed up and visible (e.g. for pull requests).
-
-**First time pushing this branch:**
-
-```bash
-git push -u origin my-feature-name
-```
-
-- **`push`** = upload your commits to the remote.
-- **`-u origin`** = remember that this branch tracks `origin/my-feature-name`, so next time you can just run `git push`.
-- **`my-feature-name`** = the branch name (same as in step 2).
-
-**Next times** (after `-u` has been set once):
-
-```bash
-git push
-```
-
-**Why:** Your work is on GitHub, safe and shareable. You can open a Pull Request from this branch into `main` when ready.
-
----
-
-## 5. Go Back to Main and Get Latest
-
-**When you’re done on a branch (or want to start from a clean main):**
-
-```bash
-git checkout main
-```
-
-Then, if others (or you on another machine) have updated `main`, pull those changes:
-
-```bash
-git pull
-```
-
-- **`pull`** = download new commits on the current branch and merge them into your local branch.
-
-**Why:** Keeps your local `main` in sync with the remote before you start a new branch or merge.
-
----
-
-## 6. Create a New Branch From Another Branch
-
-**You’re on `cursorRestart` and want a new branch that starts from it:**
-
-```bash
-git checkout -b new-branch-name
-```
-
-That creates `new-branch-name` from wherever you are now (e.g. `cursorRestart`). All commits from `cursorRestart` are in the new branch too.
-
-**Why:** Lets you build new work on top of an existing branch instead of `main`.
-
----
-
-## Quick Reference: Common Sequences
-
-| Goal | Commands |
-|------|----------|
-| Start a new feature | `git checkout main` → `git pull` → `git checkout -b feature-name` → make changes → `git add .` → `git commit -m "Message"` → `git push -u origin feature-name` |
-| Save more work on current branch | `git add .` → `git commit -m "Message"` → `git push` |
-| Switch back to main | `git checkout main` → (optional) `git pull` |
-| Start a branch from another branch | `git checkout other-branch` → `git checkout -b new-branch` |
-
----
-
-## Mistakes to Avoid
-
-1. **Space in `-m`**  
-   Wrong: `git commit - m "message"`  
-   Right: `git commit -m "message"`
-
-2. **Forgetting to be on the right branch**  
-   Run `git status` before committing so you don’t commit to the wrong branch.
-
-3. **Committing without staging**  
-   You must run `git add` (or `git add .`) before `git commit`; otherwise the commit will be empty or not include your changes.
-
----
-
-## Summary
-
-- **Branch** = line of work. **Commit** = snapshot. **Push** = send branch to GitHub.
-- New work: create branch → change code → add → commit → push.
-- Use `git status` often to see branch and changes; use `git checkout main` and `git pull` to sync with the main project.
+A personal Chinese (Mandarin) learning app to **maintain and grow vocabulary** after formal study—using your own word list, daily flashcard review, and real Chinese news with your known words highlighted.
+
+## What it does (in plain terms)
+
+- **Vocabulary library**  
+  You upload a spreadsheet (CSV) of words you’ve already learned (e.g. from MIT or other courses). The app stores this as your personal “corpus”—the set of words it will help you keep sharp and build on.
+
+- **Daily flashcard review (spaced repetition)**  
+  The app shows you flashcards on a schedule designed so you see each word right when you’re about to forget it (this is called *spaced repetition*). It uses the **FSRS** algorithm—a modern, research-backed way to decide *when* to show each card. You can review in both directions: see the Chinese and recall the English, or see the English and recall the Chinese.
+
+- **Chinese news reader**  
+  The app pulls articles from Chinese-language news (e.g. BBC, VOA, NYT Chinese, WSJ Chinese). When you read an article, **words that are in your vocabulary list are highlighted**. Tapping a word shows your saved definition; you can also “mine” new words from the article and add them to your deck for future review. Reading real content helps you notice and reinforce the words you know.
+
+So in practice: you do a short review session when cards are due, and you read news when you want—with your known vocabulary surfaced in context.
+
+## Who it’s for
+
+Intermediate to advanced learners (e.g. after formal coursework) who want to retain and expand their vocabulary without relying on generic apps that don’t use *their* existing word list or that overuse gamification. The app is built to grow with you and to fit into daily life (commute, short sessions, reading when you have time).
+
+## Tech stack (for reference)
+
+- **Frontend:** React, Vite, Tailwind CSS  
+- **Backend:** Node.js, Express  
+- **Data:** PostgreSQL with Drizzle ORM  
+- **Spaced repetition:** ts-fsrs (FSRS)  
+- **News:** RSS feeds (feedparser-promised, rss-parser), article fetching and caching  
+- **Other:** Google Gemini for translations/nuance, text-to-speech (TTS), Chinese text segmentation for matching your vocabulary in articles  
+
+## Getting started
+
+- Install dependencies: `npm install`
+- Configure environment (e.g. `.env` for `DATABASE_URL`, `GEMINI_API_KEY` if you use translations)
+- Run the app: `npm run dev`
+
+### Key Files
+- `shared/schema.ts` - Database schema (vocabulary, cards, hskWords, settings, reviewStreaks, articleCache)
+- `server/storage.ts` - Database CRUD operations with IStorage interface
+- `server/fsrs-engine.ts` - FSRS spaced repetition algorithm integration
+- `server/rss-reader.ts` - RSS feed aggregator (BBC, VOA, NYT, WSJ Chinese)
+- `server/gemini.ts` - Gemini AI translation service
+- `server/tts.ts` - Edge TTS via WebSocket for Chinese audio
+- `server/segmenter.ts` - Chinese text segmentation with vocabulary matching
+- `server/routes.ts` - All API endpoints
+- `client/src/pages/review.tsx` - Flashcard review page
+- `client/src/pages/news.tsx` - News reader with article viewer
+- `client/src/pages/library.tsx` - Vocabulary management with CSV upload
+- `client/src/pages/settings.tsx` - App settings
+- `client/src/components/navigation.tsx` - Top navigation bar
+- `client/src/components/theme-provider.tsx` - Light/dark theme support
+
+### Database Tables
+- `vocabulary` - User's vocabulary corpus (simplified, pinyin, english, lesson_number)
+- `cards` - FSRS flashcards linked to vocabulary (Recognition + Production types)
+- `hsk_words` - HSK translation cache for inline word lookups
+- `settings` - App configuration key-value store
+- `review_streaks` - Daily review streak tracking
+- `article_cache` - Persistent cache for processed articles (survives server restarts)

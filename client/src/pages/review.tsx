@@ -97,6 +97,7 @@ export default function ReviewPage() {
       setIsPracticeMode(false);
       setIsCustomPracticeMode(false);
       setCustomPracticeFilters(null);
+      setSessionDueTarget(null);
     };
     window.addEventListener("resetReview", handleReset);
     return () => window.removeEventListener("resetReview", handleReset);
@@ -127,7 +128,14 @@ export default function ReviewPage() {
         setSessionCards(cards);
         setCurrentIndex(0);
         setShowAnswer(false);
-        setReviewedCount(0);
+        if (!sessionActive) {
+          setReviewedCount(0);
+          if (!("custom" in payload) && !payload.practice) {
+            setSessionDueTarget(stats?.dueCount ?? 0);
+          } else {
+            setSessionDueTarget(null);
+          }
+        }
         setSessionActive(true);
         if ("custom" in payload) {
           setIsPracticeMode(false);
@@ -165,6 +173,12 @@ export default function ReviewPage() {
       const newReviewed = reviewedCount + 1;
       setReviewedCount(newReviewed);
       setShowAnswer(false);
+
+      if (!isPracticeMode && !isCustomPracticeMode && sessionDueTarget !== null && newReviewed >= sessionDueTarget) {
+        setSessionActive(false);
+        setSessionCards([]);
+        return;
+      }
 
       if (currentIndex + 1 < sessionCards.length) {
         setCurrentIndex(currentIndex + 1);
@@ -339,24 +353,23 @@ export default function ReviewPage() {
             cards
           </p>
           <div className="flex flex-col gap-2 pt-4">
-            {stats?.dueCount === 0 && (
-              <Button
-                onClick={() => {
-                  if (isCustomPracticeMode && customPracticeFilters) {
-                    startReviewMutation.mutate({ custom: customPracticeFilters });
-                  } else {
-                    startReviewMutation.mutate({ practice: isPracticeMode });
-                  }
-                }}
-                data-testid="button-review-more"
-              >
-                Review More
-              </Button>
-            )}
+            <Button
+              onClick={() => {
+                if (isCustomPracticeMode && customPracticeFilters) {
+                  startReviewMutation.mutate({ custom: customPracticeFilters });
+                } else {
+                  startReviewMutation.mutate({ practice: true });
+                }
+              }}
+              data-testid="button-review-more"
+            >
+              Review More
+            </Button>
             <Button
               variant="outline"
               onClick={() => {
                 setReviewedCount(0);
+                setSessionDueTarget(null);
               }}
               data-testid="button-back-home"
             >
