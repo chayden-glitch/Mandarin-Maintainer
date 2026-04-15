@@ -2,6 +2,52 @@ import { GoogleGenAI } from "@google/genai";
 
 let client: GoogleGenAI | null = null;
 
+/** News title batch + single-title calls. Override with GEMINI_NEWS_MODEL if needed (e.g. gemini-2.0-flash). */
+function newsTitleModel(): string {
+  return process.env.GEMINI_NEWS_MODEL?.trim() || "gemini-2.5-flash";
+}
+
+/** Parse JSON or numbered lines; accepts partial array length vs titles. */
+function translationsFromModelText(text: string, titles: string[]): Map<string, string> {
+  const result = new Map<string, string>();
+  let raw = text.trim();
+  const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) raw = fence[1].trim();
+  const braceStart = raw.indexOf("{");
+  const braceEnd = raw.lastIndexOf("}");
+  if (braceStart >= 0 && braceEnd > braceStart) {
+    raw = raw.slice(braceStart, braceEnd + 1);
+  }
+  try {
+    const parsed = JSON.parse(raw) as { translations?: unknown };
+    if (Array.isArray(parsed.translations)) {
+      const arr = parsed.translations;
+      const n = Math.min(arr.length, titles.length);
+      for (let i = 0; i < n; i++) {
+        const english = String(arr[i] ?? "").trim();
+        if (english) result.set(titles[i], english);
+      }
+      if (result.size > 0) return result;
+    }
+  } catch {
+    // fall through to line parsing
+  }
+
+  const numberedLine = /^(\d+)\s*[\.\)）．、:：]\s*(.+)$/;
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const normalized = trimmed.replace(/\*\*/g, "").trim();
+    const m = normalized.match(numberedLine);
+    if (!m) continue;
+    const idx = parseInt(m[1], 10) - 1;
+    const english = m[2].trim();
+    if (!english || idx < 0 || idx >= titles.length) continue;
+    result.set(titles[idx], english);
+  }
+  return result;
+}
+
 function getClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
@@ -28,7 +74,7 @@ Words:
 ${wordsText}`;
 
     const response = await gemini.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: newsTitleModel(),
       contents: prompt,
     });
 
@@ -68,44 +114,72 @@ ${wordsText}`;
 
 export async function batchTranslateTitles(titles: string[]): Promise<Map<string, string>> {
   const gemini = getClient();
-  if (!gemini || titles.length === 0) return new Map();
+  if (!gemini || titles.length === 0) {
+    return new Map();
+  }
+
+  const model = newsTitleModel();
+  const merged = new Map<string, string>();
+  const chunkSize = titles.length <= 32 ? titles.length : 24;
 
   try {
-    const titlesText = titles.map((t, i) => `${i + 1}. ${t}`).join("\n");
-    const prompt = `Translate each Chinese headline below to English.
-Format each response as:
-[number]. [english translation]
+    for (let start = 0; start < titles.length; start += chunkSize) {
+      const chunk = titles.slice(start, start + chunkSize);
+      const titlesText = chunk.map((t, i) => `${i + 1}. ${t}`).join("\n");
+      const instruction = `Translate each Chinese headline below to concise English. Preserve meaning; keep recognizable proper nouns.
 
 Headlines:
 ${titlesText}`;
 
-    const response = await gemini.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
-    });
-
-    const result = new Map<string, string>();
-    const text = response.text || "";
-    const lines = text.split("\n");
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
+      let chunkMap = new Map<string, string>();
 
       try {
-        const parts = trimmed.split(".", 2);
-        if (parts.length < 2) continue;
-        const idx = parseInt(parts[0].trim()) - 1;
-        const english = parts[1].trim();
-        if (idx >= 0 && idx < titles.length) {
-          result.set(titles[idx], english);
-        }
+        const response = await gemini.models.generateContent({
+          model,
+          contents: `${instruction}
+
+Return JSON only: an object with key "translations" whose value is an array of exactly ${chunk.length} English headline strings in the same order.`,
+          config: {
+            responseMimeType: "application/json",
+            responseJsonSchema: {
+              type: "object",
+              properties: {
+                translations: {
+                  type: "array",
+                  items: { type: "string" },
+                  minItems: chunk.length,
+                  maxItems: chunk.length,
+                },
+              },
+              required: ["translations"],
+            },
+          },
+        });
+        const text = response.text || "";
+        chunkMap = translationsFromModelText(text, chunk);
       } catch {
-        continue;
+        // fall through to plain JSON prompt
       }
+
+      if (chunkMap.size === 0) {
+        try {
+          const response = await gemini.models.generateContent({
+            model,
+            contents: `${instruction}
+
+Return ONLY valid JSON: {"translations":["..."]} with exactly ${chunk.length} strings in order. No markdown.`,
+          });
+          const text = response.text || "";
+          chunkMap = translationsFromModelText(text, chunk);
+        } catch (e) {
+          console.error("Batch title translation chunk error:", e);
+        }
+      }
+
+      chunkMap.forEach((v, k) => merged.set(k, v));
     }
 
-    return result;
+    return merged;
   } catch (e) {
     console.error("Batch title translation error:", e);
     return new Map();
@@ -123,7 +197,7 @@ Format: [pinyin] | [english translation]
 Headline: ${title}`;
 
     const response = await gemini.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: newsTitleModel(),
       contents: prompt,
     });
 
