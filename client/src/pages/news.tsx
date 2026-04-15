@@ -57,6 +57,11 @@ function ArticleView({
     setLastMousePos({ x, y });
   };
 
+  const englishHeadline =
+    article.translatedTitle?.trim() ||
+    articleMutation.data?.content?.translatedTitle?.trim() ||
+    "";
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
       <div className="flex items-center justify-between gap-2 sticky top-14 z-40 bg-background/95 backdrop-blur py-2 -mx-4 px-4 border-b">
@@ -115,13 +120,13 @@ function ArticleView({
       <div className="space-y-4">
         <div>
           {/* Metadata-first: show title and source immediately */}
-          {article.translatedTitle && (
+          {englishHeadline && (
             <h1 
               className="text-2xl font-bold font-serif leading-relaxed text-foreground dark:text-zinc-100 mb-1"
               style={{ fontSize: fontSize + 4 }}
               data-testid="text-article-translated-title"
             >
-              {article.translatedTitle}
+              {englishHeadline}
             </h1>
           )}
           
