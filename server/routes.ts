@@ -8,6 +8,7 @@ import { fetchAllFeeds, fetchArticleContent } from "./rss-reader";
 import { processArticleText } from "./segmenter";
 import { generateTTS } from "./tts";
 import { translateTitle } from "./gemini";
+import { numberedPinyinToToneMarks } from "./pinyin";
 import type { InsertVocabulary, ArticleFeed } from "@shared/schema";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -89,6 +90,45 @@ export async function registerRoutes(server: Server, app: Express): Promise<void
       res.json({ ...result, total: words.length });
     } catch (e: any) {
       res.status(500).json({ message: e.message || "Upload failed" });
+    }
+  });
+
+  app.post("/api/vocabulary", async (req: Request, res: Response) => {
+    try {
+      const body = req.body as { words?: Array<{ simplified?: string; pinyin?: string; english?: string; source?: string; lessonNumber?: string | number; exampleSentence?: string | null }> };
+      const raw = body?.words;
+      if (!Array.isArray(raw) || raw.length < 1 || raw.length > 10) {
+        return res.status(400).json({ message: "Send 1–10 words in a 'words' array" });
+      }
+      const words: InsertVocabulary[] = [];
+      for (let i = 0; i < raw.length; i++) {
+        const row = raw[i];
+        const simplified = typeof row?.simplified === "string" ? row.simplified.trim() : "";
+        const pinyinRaw = typeof row?.pinyin === "string" ? row.pinyin.trim() : "";
+        const english = typeof row?.english === "string" ? row.english.trim() : "";
+        if (!simplified || !pinyinRaw || !english) {
+          return res.status(400).json({ message: `Row ${i + 1}: simplified, pinyin, and english are required` });
+        }
+        const pinyin = numberedPinyinToToneMarks(pinyinRaw);
+        const sourceStr = typeof row?.source === "string" ? row.source.trim() : "";
+        const source = sourceStr ? [sourceStr] : null;
+        const rawLesson = row?.lessonNumber != null ? Number(row.lessonNumber) : NaN;
+        const lessonNumber = !isNaN(rawLesson) ? [rawLesson] : null;
+        const exampleSentence = typeof row?.exampleSentence === "string" ? row.exampleSentence.trim() || null : null;
+        words.push({
+          simplified,
+          pinyin,
+          english,
+          source,
+          lessonNumber,
+          exampleSentence,
+          buried: false,
+        });
+      }
+      const result = await storage.addVocabularyBatch(words);
+      res.json({ ...result, total: words.length });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message || "Add vocabulary failed" });
     }
   });
 

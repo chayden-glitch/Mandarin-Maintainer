@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Search, BookOpen, Trash2, Eye, EyeOff, FileText, FileSpreadsheet } from "lucide-react";
+import { Upload, Search, BookOpen, Trash2, Eye, EyeOff, FileText, FileSpreadsheet, Plus, PlusCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 import type { Vocabulary } from "@shared/schema";
 
@@ -21,12 +21,31 @@ interface UploadResult {
   skippedWords: string[];
 }
 
+interface AddRow {
+  simplified: string;
+  pinyin: string;
+  english: string;
+  source: string;
+  lessonNumber: string;
+  exampleSentence: string;
+}
+
+const emptyAddRow = (): AddRow => ({
+  simplified: "",
+  pinyin: "",
+  english: "",
+  source: "",
+  lessonNumber: "",
+  exampleSentence: "",
+});
+
 export default function LibraryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<string>("all");
   const [selectedLesson, setSelectedLesson] = useState<string>("all");
   const [uploadPreview, setUploadPreview] = useState<any[] | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [addRows, setAddRows] = useState<AddRow[]>([emptyAddRow()]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -62,6 +81,57 @@ export default function LibraryPage() {
     onError: (err) => {
       toast({
         title: "Import Failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addWordsMutation = useMutation({
+    mutationFn: async (rows: AddRow[]) => {
+      const words = rows
+        .map((r) => ({
+          simplified: r.simplified.trim(),
+          pinyin: r.pinyin.trim(),
+          english: r.english.trim(),
+          source: r.source.trim() || undefined,
+          lessonNumber: r.lessonNumber.trim() ? parseInt(r.lessonNumber, 10) : undefined,
+          exampleSentence: r.exampleSentence.trim() || undefined,
+        }))
+        .filter((r) => r.simplified && r.pinyin && r.english);
+      if (words.length === 0) throw new Error("At least one word must have Simplified, Pinyin, and English.");
+      const res = await fetch("/api/vocabulary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ words }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        let msg = text;
+        try {
+          const j = JSON.parse(text);
+          if (j?.message) msg = j.message;
+        } catch {}
+        throw new Error(msg);
+      }
+      return res.json() as Promise<UploadResult>;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vocabulary"] });
+      queryClient.invalidateQueries({ predicate: (query) => (query.queryKey[0] as string)?.startsWith("/api/review/stats") });
+      const parts = [`Added ${data.added} new words`];
+      if (data.merged > 0) parts.push(`${data.merged} merged with existing`);
+      if (data.skipped > 0) parts.push(`${data.skipped} skipped`);
+      toast({
+        title: "Add Complete",
+        description: parts.join(". ") + ".",
+      });
+      setAddRows([emptyAddRow()]);
+    },
+    onError: (err) => {
+      toast({
+        title: "Add Failed",
         description: err.message,
         variant: "destructive",
       });
@@ -217,6 +287,10 @@ export default function LibraryPage() {
             <Upload className="w-4 h-4 mr-1" />
             Upload
           </TabsTrigger>
+          <TabsTrigger value="add" data-testid="tab-add">
+            <PlusCircle className="w-4 h-4 mr-1" />
+            Add
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="browse" className="space-y-4">
@@ -330,6 +404,121 @@ export default function LibraryPage() {
               </div>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="add" className="space-y-4">
+          <div className="p-3 bg-muted/50 rounded-md text-sm text-muted-foreground">
+            Add 1–10 words at a time. Source and Lesson number are optional (e.g. for words you picked up in daily life). Use the number system for pinyin (e.g. ni3 hao3).
+          </div>
+          <Card className="p-4 space-y-4">
+            <div className="space-y-3">
+              {addRows.map((row, index) => (
+                <div key={index} className="space-y-2 border-b pb-3 last:border-0 last:pb-0">
+                  <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 items-end">
+                    <Input
+                      placeholder="Simplified"
+                      value={row.simplified}
+                      onChange={(e) => {
+                        const next = [...addRows];
+                        next[index] = { ...next[index], simplified: e.target.value };
+                        setAddRows(next);
+                      }}
+                      className="font-serif"
+                      data-testid={`add-simplified-${index}`}
+                    />
+                    <Input
+                      placeholder="Pinyin (e.g. ni3 hao3)"
+                      value={row.pinyin}
+                      onChange={(e) => {
+                        const next = [...addRows];
+                        next[index] = { ...next[index], pinyin: e.target.value };
+                        setAddRows(next);
+                      }}
+                      data-testid={`add-pinyin-${index}`}
+                    />
+                    <Input
+                      placeholder="English"
+                      value={row.english}
+                      onChange={(e) => {
+                        const next = [...addRows];
+                        next[index] = { ...next[index], english: e.target.value };
+                        setAddRows(next);
+                      }}
+                      data-testid={`add-english-${index}`}
+                    />
+                    <Input
+                      placeholder="Source (optional)"
+                      value={row.source}
+                      onChange={(e) => {
+                        const next = [...addRows];
+                        next[index] = { ...next[index], source: e.target.value };
+                        setAddRows(next);
+                      }}
+                      data-testid={`add-source-${index}`}
+                    />
+                    <Input
+                      placeholder="Lesson # (optional)"
+                      type="text"
+                      inputMode="numeric"
+                      value={row.lessonNumber}
+                      onChange={(e) => {
+                        const next = [...addRows];
+                        next[index] = { ...next[index], lessonNumber: e.target.value };
+                        setAddRows(next);
+                      }}
+                      data-testid={`add-lesson-${index}`}
+                    />
+                    <div className="flex items-center gap-1">
+                      {addRows.length > 1 && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setAddRows((prev) => prev.filter((_, i) => i !== index))}
+                          data-testid={`add-remove-row-${index}`}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <Input
+                    placeholder="Example sentence (optional)"
+                    value={row.exampleSentence}
+                    onChange={(e) => {
+                      const next = [...addRows];
+                      next[index] = { ...next[index], exampleSentence: e.target.value };
+                      setAddRows(next);
+                    }}
+                    className="text-sm"
+                    data-testid={`add-example-${index}`}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {addRows.length < 10 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAddRows((prev) => [...prev, emptyAddRow()])}
+                  data-testid="button-add-row"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add row
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={() => addWordsMutation.mutate(addRows)}
+                disabled={addWordsMutation.isPending || !addRows.some((r) => r.simplified.trim() && r.pinyin.trim() && r.english.trim())}
+                data-testid="button-submit-add"
+              >
+                {addWordsMutation.isPending ? "Adding..." : "Add words"}
+              </Button>
+            </div>
+          </Card>
         </TabsContent>
 
         <TabsContent value="upload" className="space-y-4">

@@ -195,14 +195,14 @@ function ArticleView({
 
         {articleMutation.isPending && (
           <div className="space-y-4 py-8">
-            <div className="space-y-2 pt-4">
+            <p className="text-sm text-muted-foreground text-center" data-testid="text-loading-article">
+              Processing text and matching vocabulary...
+            </p>
+            <div className="space-y-2">
               {Array.from({ length: 12 }).map((_, i) => (
                 <Skeleton key={i} className="h-4 w-full" />
               ))}
             </div>
-            <p className="text-sm text-muted-foreground text-center pt-2" data-testid="text-loading-article">
-              Processing text and matching vocabulary...
-            </p>
           </div>
         )}
 
