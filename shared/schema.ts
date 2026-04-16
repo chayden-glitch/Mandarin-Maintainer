@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, integer, real, serial, timestamp, boolean, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, serial, timestamp, boolean, uniqueIndex, index, jsonb, varchar, json } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -42,6 +42,22 @@ export const hskWords = pgTable("hsk_words", {
   english: text("english").notNull(),
 });
 
+/** CC-CEDICT reference rows (many per simplified when readings differ). */
+export const cedictEntries = pgTable(
+  "cedict_entries",
+  {
+    id: serial("id").primaryKey(),
+    traditional: text("traditional").notNull(),
+    simplified: text("simplified").notNull(),
+    pinyin: text("pinyin").notNull(),
+    english: text("english").notNull(),
+  },
+  (table) => [
+    uniqueIndex("cedict_simplified_pinyin_idx").on(table.simplified, table.pinyin),
+    index("cedict_entries_simplified_idx").on(table.simplified),
+  ]
+);
+
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
@@ -59,6 +75,16 @@ export const articleCache = pgTable("article_cache", {
   url: text("url").notNull().unique(),
   data: jsonb("data").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+/**
+ * Express session store (connect-pg-simple default shape).
+ * Declared in Drizzle schema so `drizzle-kit push` does not treat the table as orphan and drop it.
+ */
+export const session = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
 });
 
 export const vocabularyRelations = relations(vocabulary, ({ many }) => ({
@@ -86,6 +112,10 @@ export const insertHskWordSchema = createInsertSchema(hskWords).omit({
   id: true,
 });
 
+export const insertCedictEntrySchema = createInsertSchema(cedictEntries).omit({
+  id: true,
+});
+
 export const insertSettingSchema = createInsertSchema(settings);
 
 export type Vocabulary = typeof vocabulary.$inferSelect;
@@ -94,6 +124,8 @@ export type Card = typeof cards.$inferSelect;
 export type InsertCard = z.infer<typeof insertCardSchema>;
 export type HskWord = typeof hskWords.$inferSelect;
 export type InsertHskWord = z.infer<typeof insertHskWordSchema>;
+export type CedictEntry = typeof cedictEntries.$inferSelect;
+export type InsertCedictEntry = z.infer<typeof insertCedictEntrySchema>;
 export type Setting = typeof settings.$inferSelect;
 
 export interface ReviewStats {
