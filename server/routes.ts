@@ -17,6 +17,7 @@ let rssFeedCache: { data: ArticleFeed[]; timestamp: number; hasMissingTranslatio
 const RSS_CACHE_TTL = 30 * 60 * 1000;
 const RETRY_CACHE_TTL = 2 * 60 * 1000;
 const CHINESE_CHAR_REGEX = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
+const ARTICLE_CACHE_VERSION = 2;
 
 function hasSeverelyIncompleteTranslations(
   bodySegments: Array<{ text?: string; translation?: unknown }> = [],
@@ -31,6 +32,10 @@ function hasSeverelyIncompleteTranslations(
     untranslatedChineseSegments.length >= 12 &&
     untranslatedChineseSegments.length / chineseSegments.length >= 0.3
   );
+}
+
+function isCurrentArticleCache(cached: any): boolean {
+  return cached?.cacheVersion === ARTICLE_CACHE_VERSION;
 }
 
 export async function registerRoutes(server: Server, app: Express): Promise<void> {
@@ -259,11 +264,12 @@ export async function registerRoutes(server: Server, app: Express): Promise<void
 
     const cached = await storage.getArticleCache(url);
     if (cached) {
+      const staleCacheVersion = !isCurrentArticleCache(cached);
       const cachedLooksIncomplete = hasSeverelyIncompleteTranslations(cached?.segments, cached?.titleSegments);
-      if (cachedLooksIncomplete) {
-        console.warn(`Discarding incomplete article cache: ${url}`);
+      if (staleCacheVersion || cachedLooksIncomplete) {
+        console.warn(`Discarding stale/incomplete article cache: ${url}`);
         // #region agent log
-        fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'A_cached_partial_result',location:'server/routes.ts:261',message:'Discarded incomplete cached article',data:{url},timestamp:Date.now()})}).catch(()=>{});
+        fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'A_cached_partial_result',location:'server/routes.ts:261',message:'Discarded stale/incomplete cached article',data:{url,staleCacheVersion,cachedVersion:cached?.cacheVersion ?? null,currentVersion:ARTICLE_CACHE_VERSION},timestamp:Date.now()})}).catch(()=>{});
         // #endregion
       } else {
       console.log(`Cache hit for article: ${url}`);
@@ -289,7 +295,8 @@ export async function registerRoutes(server: Server, app: Express): Promise<void
         content: { ...content, translatedTitle: translation?.englishOnly }, 
         titleSegments, 
         segments, 
-        vocabMatches 
+        vocabMatches,
+        cacheVersion: ARTICLE_CACHE_VERSION,
       };
 
       // #region agent log
