@@ -8,7 +8,9 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "db:push": "tsx --env-file=.env node_modules/.bin/drizzle-kit push"
+    "db:push": "tsx --env-file=.env node_modules/.bin/drizzle-kit push",
+    "test:cedict": "tsx script/test-cc-cedict-gloss.ts",
+    "import:cedict": "tsx --env-file=.env script/import-cc-cedict.ts"
   },
   "dependencies": {
     "@google/genai": "^1.41.0",

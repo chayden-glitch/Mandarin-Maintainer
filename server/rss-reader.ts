@@ -2,9 +2,8 @@ import type { ArticleFeed, ArticleContent } from "@shared/schema";
 import RssParser from "rss-parser";
 import * as cheerio from "cheerio";
 import * as OpenCC from "opencc-js";
-import { batchTranslateTitles, translateTitle } from "./gemini";
+import { batchTranslateTitles } from "./gemini";
 import { storage } from "./storage";
-import { processArticleText } from "./segmenter";
 
 const rssParser = new RssParser({
   timeout: 10000,
@@ -183,37 +182,14 @@ export async function fetchAllFeeds(): Promise<{ articles: ArticleFeed[]; hasMis
     } catch {}
   }
 
-  const topArticles = freeArticles.slice(0, 5);
-  for (const article of topArticles) {
-    (async () => {
-      try {
-        const cached = await storage.getArticleCache(article.link);
-        if (cached) return;
-        const needsConversion = NEEDS_CONVERSION.has(article.feedName || "");
-        const content = await fetchArticleContent(article.link, needsConversion);
-        if (content && content.text) {
-          const translation = await translateTitle(content.title);
-          const { segments: titleSegments, vocabMatches: titleVocab } = await processArticleText(content.title);
-          const { segments, vocabMatches: textVocab } = await processArticleText(content.text);
-          const vocabMatches = Array.from(new Set([...titleVocab, ...textVocab]));
-          await storage.setArticleCache(article.link, { 
-            content: { ...content, translatedTitle: translation?.englishOnly }, 
-            titleSegments, 
-            segments, 
-            vocabMatches 
-          });
-          console.log(`Background warmed article: ${article.link}`);
-        }
-      } catch (e) {
-        console.error(`Error warming cache for ${article.link}:`, e);
-      }
-    })();
-  }
-
   return { articles: sortedArticles, hasMissingTranslations };
 }
 
-export async function fetchArticleContent(url: string, needsConversion: boolean = false): Promise<ArticleContent | null> {
+export async function fetchArticleContent(
+  url: string,
+  needsConversion: boolean = false,
+  debugRunId?: string
+): Promise<ArticleContent | null> {
   try {
     const response = await fetch(url, {
       headers: {
@@ -281,6 +257,12 @@ export async function fetchArticleContent(url: string, needsConversion: boolean 
     if (needsConversion) {
       title = convertTraditionalToSimplified(title);
       text = convertTraditionalToSimplified(text);
+    }
+
+    if (debugRunId) {
+      // #region agent log
+      fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'B_extraction_or_truncation',location:'server/rss-reader.ts:289',message:'Extracted article content',data:{urlHost:(()=>{try{return new URL(url).host;}catch{return 'invalid-url';}})(),needsConversion,paragraphCount:paragraphs.length,titleLength:title.length,textLength:text.length,topImageFound:!!topImage},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     }
 
     if (!text || text.length < 20) {

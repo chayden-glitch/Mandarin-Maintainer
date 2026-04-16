@@ -16,6 +16,27 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 let rssFeedCache: { data: ArticleFeed[]; timestamp: number; hasMissingTranslations: boolean } | null = null;
 const RSS_CACHE_TTL = 30 * 60 * 1000;
 const RETRY_CACHE_TTL = 2 * 60 * 1000;
+const CHINESE_CHAR_REGEX = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
+const ARTICLE_CACHE_VERSION = 2;
+
+function hasSeverelyIncompleteTranslations(
+  bodySegments: Array<{ text?: string; translation?: unknown }> = [],
+  titleSegments: Array<{ text?: string; translation?: unknown }> = []
+): boolean {
+  const allSegments = [...titleSegments, ...bodySegments];
+  const chineseSegments = allSegments.filter((seg) => CHINESE_CHAR_REGEX.test(seg.text || ""));
+  const untranslatedChineseSegments = chineseSegments.filter((seg) => !seg.translation);
+
+  return (
+    chineseSegments.length >= 30 &&
+    untranslatedChineseSegments.length >= 12 &&
+    untranslatedChineseSegments.length / chineseSegments.length >= 0.3
+  );
+}
+
+function isCurrentArticleCache(cached: any): boolean {
+  return cached?.cacheVersion === ARTICLE_CACHE_VERSION;
+}
 
 export async function registerRoutes(server: Server, app: Express): Promise<void> {
 
@@ -239,32 +260,57 @@ export async function registerRoutes(server: Server, app: Express): Promise<void
   app.post("/api/news/article", async (req: Request, res: Response) => {
     const { url, needsConversion } = req.body;
     if (!url) return res.status(400).json({ message: "URL required" });
+    const debugRunId = `article:${Date.now()}:${url}`;
 
     const cached = await storage.getArticleCache(url);
     if (cached) {
+      const staleCacheVersion = !isCurrentArticleCache(cached);
+      const cachedLooksIncomplete = hasSeverelyIncompleteTranslations(cached?.segments, cached?.titleSegments);
+      if (staleCacheVersion || cachedLooksIncomplete) {
+        console.warn(`Discarding stale/incomplete article cache: ${url}`);
+        // #region agent log
+        fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'A_cached_partial_result',location:'server/routes.ts:261',message:'Discarded stale/incomplete cached article',data:{url,staleCacheVersion,cachedVersion:cached?.cacheVersion ?? null,currentVersion:ARTICLE_CACHE_VERSION},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+      } else {
       console.log(`Cache hit for article: ${url}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'A_cached_partial_result',location:'server/routes.ts:247',message:'Served article from cache',data:{url,bodySegmentCount:Array.isArray(cached?.segments)?cached.segments.length:null,titleSegmentCount:Array.isArray(cached?.titleSegments)?cached.titleSegments.length:null,translatedBodySegmentCount:Array.isArray(cached?.segments)?cached.segments.filter((seg:any)=>seg?.translation).length:null,translatedTitleSegmentCount:Array.isArray(cached?.titleSegments)?cached.titleSegments.filter((seg:any)=>seg?.translation).length:null,vocabMatchCount:Array.isArray(cached?.vocabMatches)?cached.vocabMatches.length:null},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return res.json(cached);
+      }
     }
 
     try {
-      const content = await fetchArticleContent(url, needsConversion);
+      const content = await fetchArticleContent(url, needsConversion, debugRunId);
       if (!content || !content.text) {
         return res.status(404).json({ message: "Could not extract article content" });
       }
 
       const translation = await translateTitle(content.title);
-      const { segments: titleSegments, vocabMatches: titleVocab } = await processArticleText(content.title);
-      const { segments, vocabMatches: textVocab } = await processArticleText(content.text);
+      const { segments: titleSegments, vocabMatches: titleVocab } = await processArticleText(content.title, "title", debugRunId);
+      const { segments, vocabMatches: textVocab } = await processArticleText(content.text, "body", debugRunId);
       
       const vocabMatches = Array.from(new Set([...titleVocab, ...textVocab]));
       const result = { 
         content: { ...content, translatedTitle: translation?.englishOnly }, 
         titleSegments, 
         segments, 
-        vocabMatches 
+        vocabMatches,
+        cacheVersion: ARTICLE_CACHE_VERSION,
       };
+
+      // #region agent log
+      fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'E_payload_missing_translations',location:'server/routes.ts:272',message:'Returning processed article response',data:{url,titleSegmentCount:titleSegments.length,bodySegmentCount:segments.length,translatedTitleSegmentCount:titleSegments.filter((seg)=>!!seg.translation).length,translatedBodySegmentCount:segments.filter((seg)=>!!seg.translation).length,vocabMatchCount:vocabMatches.length},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       
-      await storage.setArticleCache(url, result);
+      if (hasSeverelyIncompleteTranslations(segments, titleSegments)) {
+        console.warn(`Skipping cache for incomplete article translation: ${url}`);
+        // #region agent log
+        fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'A_cached_partial_result',location:'server/routes.ts:290',message:'Skipped caching incomplete processed article',data:{url},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+      } else {
+        await storage.setArticleCache(url, result);
+      }
       
       res.json(result);
     } catch (e: any) {

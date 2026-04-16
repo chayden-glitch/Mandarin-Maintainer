@@ -1,5 +1,5 @@
 import {
-  vocabulary, cards, hskWords, settings, reviewStreaks, articleCache as articleCacheTable,
+  vocabulary, cards, hskWords, cedictEntries, settings, reviewStreaks, articleCache as articleCacheTable,
   type Vocabulary, type InsertVocabulary,
   type Card, type InsertCard,
   type HskWord, type InsertHskWord,
@@ -80,6 +80,7 @@ export interface IStorage {
 
   getHskTranslation(simplified: string): Promise<{ pinyin: string; english: string } | null>;
   getHskTranslationsBatch(words: string[]): Promise<Map<string, { pinyin: string; english: string }>>;
+  getCedictTranslationsBatch(words: string[]): Promise<Map<string, { pinyin: string; english: string }>>;
   importHskWords(words: InsertHskWord[]): Promise<number>;
   getHskWordCount(): Promise<number>;
 
@@ -572,6 +573,38 @@ export class DatabaseStorage implements IStorage {
       map.set(r.simplified, { pinyin: r.pinyin, english: r.english });
     }
     return map;
+  }
+
+  /**
+   * One best CC-CEDICT row per simplified token: shortest english, then lowest id.
+   */
+  async getCedictTranslationsBatch(words: string[]): Promise<Map<string, { pinyin: string; english: string }>> {
+    if (words.length === 0) return new Map();
+
+    const unique = [...new Set(words.filter(Boolean))];
+    const best = new Map<string, { pinyin: string; english: string; id: number }>();
+    const chunkSize = 500;
+
+    for (let i = 0; i < unique.length; i += chunkSize) {
+      const chunk = unique.slice(i, i + chunkSize);
+      const rows = await db.select().from(cedictEntries).where(inArray(cedictEntries.simplified, chunk));
+      for (const r of rows) {
+        const cur = best.get(r.simplified);
+        if (
+          !cur ||
+          r.english.length < cur.english.length ||
+          (r.english.length === cur.english.length && r.id < cur.id)
+        ) {
+          best.set(r.simplified, { pinyin: r.pinyin, english: r.english, id: r.id });
+        }
+      }
+    }
+
+    const out = new Map<string, { pinyin: string; english: string }>();
+    for (const [k, v] of Array.from(best.entries())) {
+      out.set(k, { pinyin: v.pinyin, english: v.english });
+    }
+    return out;
   }
 
   async importHskWords(words: InsertHskWord[]): Promise<number> {
