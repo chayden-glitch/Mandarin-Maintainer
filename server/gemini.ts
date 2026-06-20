@@ -81,13 +81,6 @@ function getClient(): GoogleGenAI | null {
   return client;
 }
 
-<<<<<<< HEAD
-export async function batchTranslateWords(
-  words: string[],
-  debugContext: string = "article",
-  debugRunId?: string
-): Promise<Map<string, { pinyin: string; english: string }>> {
-=======
 /** Parse a structured JSON word-translation response into a Map keyed by word index. */
 function wordTranslationsFromModelText(text: string, words: string[]): Map<string, { pinyin: string; english: string }> {
   const result = new Map<string, { pinyin: string; english: string }>();
@@ -166,16 +159,8 @@ function wordTranslationsFromLines(text: string, words: string[]): Map<string, {
 }
 
 export async function batchTranslateWords(words: string[]): Promise<Map<string, { pinyin: string; english: string }>> {
->>>>>>> bug/traditional
   const gemini = getClient();
-  if (!gemini || words.length === 0) {
-    if (debugRunId) {
-      // #region agent log
-      fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'D_model_unavailable',location:'server/gemini.ts:64',message:'Skipped batchTranslateWords',data:{debugContext,wordCount:words.length,hasGeminiClient:!!gemini},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-    }
-    return new Map();
-  }
+  if (!gemini || words.length === 0) return new Map();
 
   const model = newsTitleModel();
   const wordsText = words.map((w, i) => `${i + 1}. ${w}`).join("\n");
@@ -240,30 +225,12 @@ Return ONLY valid JSON: {"translations":[{"pinyin":"...","english":"..."},...]} 
       model,
       contents: `${instruction}
 
-<<<<<<< HEAD
-    if (debugRunId) {
-      // #region agent log
-      fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'D_gemini_partial_parse',location:'server/gemini.ts:108',message:'Gemini batchTranslateWords parsed response',data:{debugContext,requestedCount:words.length,parsedCount:result.size,missingCount:words.length-result.size,responsePreview:text.replace(/\s+/g,' ').slice(0,180)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-    }
-
-    return result;
-  } catch (e) {
-    if (debugRunId) {
-      const err = e as any;
-      // #region agent log
-      fetch('http://127.0.0.1:7426/ingest/ba001716-ae58-4601-9004-23d73d76048a',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8aa294'},body:JSON.stringify({sessionId:'8aa294',runId:debugRunId,hypothesisId:'D_gemini_request_failed',location:'server/gemini.ts:114',message:'Gemini batchTranslateWords request failed',data:{debugContext,wordCount:words.length,errorMessage:err?.message||String(err),status:err?.status},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-    }
-    console.error("Gemini translation error:", e);
-=======
 Format each response as:
 [number]. [pinyin] | [english]`,
     });
     return wordTranslationsFromLines(response.text || "", words);
   } catch (e) {
     console.error("Gemini word translation error:", e);
->>>>>>> bug/traditional
     return new Map();
   }
 }
