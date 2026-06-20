@@ -42,7 +42,13 @@ async function getPriorityKeywords(): Promise<string[]> {
   return [];
 }
 
-const NEEDS_CONVERSION = new Set(["BBC Business", "BBC Science", "BBC China"]);
+const NEEDS_CONVERSION = new Set([
+  "BBC Top Stories",
+  "BBC Business",
+  "BBC Science",
+  "BBC China",
+  "BBC World",
+]);
 
 const t2sConverter = (OpenCC as any).Converter({ from: "tw", to: "cn" });
 
@@ -133,6 +139,7 @@ export async function fetchAllFeeds(): Promise<{ articles: ArticleFeed[]; hasMis
           source: name,
           feedName: name,
           isFree,
+          needsConversion: NEEDS_CONVERSION.has(name),
           priority: score,
           matchedKeywords: matched.length > 0 ? matched : undefined,
         };
@@ -160,13 +167,41 @@ export async function fetchAllFeeds(): Promise<{ articles: ArticleFeed[]; hasMis
   try {
     const titlesToTranslate = sortedArticles.map(a => a.title);
     const translations = await batchTranslateTitles(titlesToTranslate);
-    
+
+    const missingArticles: ArticleFeed[] = [];
     for (const article of sortedArticles) {
       const translation = translations.get(article.title);
       if (translation) {
         article.translatedTitle = translation;
       } else {
-        hasMissingTranslations = true;
+        missingArticles.push(article);
+      }
+    }
+
+    // Fallback: if batch response misses some rows, recover with per-title calls.
+    if (missingArticles.length > 0) {
+      const fallbackResults = await Promise.allSettled(
+        missingArticles.map((article) => translateTitle(article.title))
+      );
+
+      fallbackResults.forEach((result, index) => {
+        const article = missingArticles[index];
+        if (result.status === "fulfilled" && result.value?.englishOnly) {
+          article.translatedTitle = result.value.englishOnly;
+        } else {
+          hasMissingTranslations = true;
+        }
+      });
+    }
+
+    if (missingArticles.length === 0) {
+      hasMissingTranslations = false;
+    } else {
+      for (const article of missingArticles) {
+        if (!article.translatedTitle) {
+          hasMissingTranslations = true;
+          break;
+        }
       }
     }
   } catch (e) {
@@ -189,7 +224,7 @@ export async function fetchAllFeeds(): Promise<{ articles: ArticleFeed[]; hasMis
       try {
         const cached = await storage.getArticleCache(article.link);
         if (cached) return;
-        const needsConversion = NEEDS_CONVERSION.has(article.feedName || "");
+        const needsConversion = article.needsConversion ?? NEEDS_CONVERSION.has(article.feedName || "");
         const content = await fetchArticleContent(article.link, needsConversion);
         if (content && content.text) {
           const translation = await translateTitle(content.title);

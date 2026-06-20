@@ -13,20 +13,44 @@ function translationsFromModelText(text: string, titles: string[]): Map<string, 
   let raw = text.trim();
   const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fence) raw = fence[1].trim();
-  const braceStart = raw.indexOf("{");
-  const braceEnd = raw.lastIndexOf("}");
-  if (braceStart >= 0 && braceEnd > braceStart) {
-    raw = raw.slice(braceStart, braceEnd + 1);
+
+  // Try to extract a JSON object or array block from mixed text.
+  const objectStart = raw.indexOf("{");
+  const objectEnd = raw.lastIndexOf("}");
+  const arrayStart = raw.indexOf("[");
+  const arrayEnd = raw.lastIndexOf("]");
+  if (objectStart >= 0 && objectEnd > objectStart) {
+    raw = raw.slice(objectStart, objectEnd + 1);
+  } else if (arrayStart >= 0 && arrayEnd > arrayStart) {
+    raw = raw.slice(arrayStart, arrayEnd + 1);
   }
+
+  const setFromArray = (arr: unknown[]) => {
+    const n = Math.min(arr.length, titles.length);
+    for (let i = 0; i < n; i++) {
+      const english = String(arr[i] ?? "").trim();
+      if (english) result.set(titles[i], english);
+    }
+  };
+
   try {
-    const parsed = JSON.parse(raw) as { translations?: unknown };
-    if (Array.isArray(parsed.translations)) {
-      const arr = parsed.translations;
-      const n = Math.min(arr.length, titles.length);
-      for (let i = 0; i < n; i++) {
-        const english = String(arr[i] ?? "").trim();
-        if (english) result.set(titles[i], english);
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (Array.isArray(parsed)) {
+      setFromArray(parsed);
+      if (result.size > 0) return result;
+    } else if (parsed && typeof parsed === "object") {
+      const obj = parsed as Record<string, unknown>;
+
+      // Preferred key first; fallback keys are defensive for model drift.
+      const candidateKeys = ["translations", "headlines", "results", "data", "items"];
+      for (const key of candidateKeys) {
+        if (Array.isArray(obj[key])) {
+          setFromArray(obj[key] as unknown[]);
+          break;
+        }
       }
+
       if (result.size > 0) return result;
     }
   } catch {
@@ -57,57 +81,156 @@ function getClient(): GoogleGenAI | null {
   return client;
 }
 
+/** Parse a structured JSON word-translation response into a Map keyed by word index. */
+function wordTranslationsFromModelText(text: string, words: string[]): Map<string, { pinyin: string; english: string }> {
+  const result = new Map<string, { pinyin: string; english: string }>();
+  let raw = text.trim();
+
+  // Strip markdown code fences.
+  const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) raw = fence[1].trim();
+
+  // Isolate the outermost JSON object or array.
+  const objectStart = raw.indexOf("{");
+  const objectEnd = raw.lastIndexOf("}");
+  const arrayStart = raw.indexOf("[");
+  const arrayEnd = raw.lastIndexOf("]");
+  if (objectStart >= 0 && objectEnd > objectStart) {
+    raw = raw.slice(objectStart, objectEnd + 1);
+  } else if (arrayStart >= 0 && arrayEnd > arrayStart) {
+    raw = raw.slice(arrayStart, arrayEnd + 1);
+  }
+
+  const applyArray = (arr: unknown[]) => {
+    const n = Math.min(arr.length, words.length);
+    for (let i = 0; i < n; i++) {
+      const item = arr[i];
+      if (!item || typeof item !== "object") continue;
+      const obj = item as Record<string, unknown>;
+      const pinyin = String(obj.pinyin ?? "").replace(/\*\*/g, "").trim();
+      const english = String(obj.english ?? "").replace(/\*\*/g, "").trim();
+      if (pinyin && english) {
+        result.set(words[i], { pinyin, english });
+      }
+    }
+  };
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (Array.isArray(parsed)) {
+      applyArray(parsed);
+      if (result.size > 0) return result;
+    } else if (parsed && typeof parsed === "object") {
+      const obj = parsed as Record<string, unknown>;
+      const candidateKeys = ["translations", "results", "items", "data"];
+      for (const key of candidateKeys) {
+        if (Array.isArray(obj[key])) {
+          applyArray(obj[key] as unknown[]);
+          break;
+        }
+      }
+    }
+  } catch {
+    // fall through — return whatever was collected (possibly empty)
+  }
+
+  return result;
+}
+
+/** Legacy line parser kept as last-resort fallback for `N. pinyin | english` format. */
+function wordTranslationsFromLines(text: string, words: string[]): Map<string, { pinyin: string; english: string }> {
+  const result = new Map<string, { pinyin: string; english: string }>();
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim().replace(/\*\*/g, "");
+    if (!trimmed || !trimmed.includes("|")) continue;
+    const dotIdx = trimmed.indexOf(".");
+    if (dotIdx < 0) continue;
+    const idx = parseInt(trimmed.slice(0, dotIdx).trim()) - 1;
+    const rest = trimmed.slice(dotIdx + 1).trim();
+    const pipeIdx = rest.indexOf("|");
+    if (pipeIdx < 0 || idx < 0 || idx >= words.length) continue;
+    const pinyin = rest.slice(0, pipeIdx).trim();
+    const english = rest.slice(pipeIdx + 1).trim();
+    if (pinyin && english) {
+      result.set(words[idx], { pinyin, english });
+    }
+  }
+  return result;
+}
+
 export async function batchTranslateWords(words: string[]): Promise<Map<string, { pinyin: string; english: string }>> {
   const gemini = getClient();
   if (!gemini || words.length === 0) return new Map();
 
-  try {
-    const wordsText = words.map((w, i) => `${i + 1}. ${w}`).join("\n");
-    const prompt = `For each Chinese word/phrase below, provide:
-1. Pinyin with tone marks
-2. Concise English translation (2-5 words max)
-
-Format each response as:
-[number]. [pinyin] | [english]
+  const model = newsTitleModel();
+  const wordsText = words.map((w, i) => `${i + 1}. ${w}`).join("\n");
+  const instruction = `For each Chinese word/phrase below, provide pinyin with tone marks and a concise English gloss (2-5 words).
 
 Words:
 ${wordsText}`;
 
+  // Primary: structured JSON schema — forces model to return exactly one object per word.
+  try {
     const response = await gemini.models.generateContent({
-      model: newsTitleModel(),
-      contents: prompt,
+      model,
+      contents: `${instruction}
+
+Return JSON only: { "translations": [ { "pinyin": "...", "english": "..." }, ... ] } with exactly ${words.length} objects in the same order.`,
+      config: {
+        responseMimeType: "application/json",
+        responseJsonSchema: {
+          type: "object",
+          properties: {
+            translations: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  pinyin: { type: "string" },
+                  english: { type: "string" },
+                },
+                required: ["pinyin", "english"],
+              },
+              minItems: words.length,
+              maxItems: words.length,
+            },
+          },
+          required: ["translations"],
+        },
+      },
     });
+    const parsed = wordTranslationsFromModelText(response.text || "", words);
+    if (parsed.size > 0) return parsed;
+  } catch {
+    // fall through to plain JSON fallback
+  }
 
-    const result = new Map<string, { pinyin: string; english: string }>();
-    const text = response.text || "";
-    const lines = text.split("\n");
+  // Fallback 1: plain JSON prompt without schema enforcement.
+  try {
+    const response = await gemini.models.generateContent({
+      model,
+      contents: `${instruction}
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.includes("|")) continue;
+Return ONLY valid JSON: {"translations":[{"pinyin":"...","english":"..."},...]} with exactly ${words.length} objects in order. No markdown.`,
+    });
+    const parsed = wordTranslationsFromModelText(response.text || "", words);
+    if (parsed.size > 0) return parsed;
+  } catch {
+    // fall through to legacy parser
+  }
 
-      try {
-        const parts = trimmed.split(".", 2);
-        if (parts.length < 2) continue;
-        const idx = parseInt(parts[0].trim()) - 1;
-        const rest = parts[1].trim();
-        if (rest.includes("|")) {
-          const [pinyin, english] = rest.split("|", 2);
-          if (idx >= 0 && idx < words.length) {
-            result.set(words[idx], {
-              pinyin: pinyin.replace(/\*\*/g, "").trim(),
-              english: english.replace(/\*\*/g, "").trim(),
-            });
-          }
-        }
-      } catch {
-        continue;
-      }
-    }
+  // Fallback 2: legacy free-form line parser (N. pinyin | english).
+  try {
+    const response = await gemini.models.generateContent({
+      model,
+      contents: `${instruction}
 
-    return result;
+Format each response as:
+[number]. [pinyin] | [english]`,
+    });
+    return wordTranslationsFromLines(response.text || "", words);
   } catch (e) {
-    console.error("Gemini translation error:", e);
+    console.error("Gemini word translation error:", e);
     return new Map();
   }
 }

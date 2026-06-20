@@ -43,7 +43,7 @@ function ArticleView({
     mutationFn: async (article: ArticleFeed) => {
       const res = await apiRequest("POST", "/api/news/article", {
         url: article.link,
-        needsConversion: article.feedName?.includes("BBC") ?? false,
+        needsConversion: article.needsConversion ?? false,
       });
       return res.json() as Promise<ProcessedArticle>;
     },
