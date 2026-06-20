@@ -156,6 +156,7 @@ export interface ArticleFeed {
   source: string;
   feedName: string;
   isFree: boolean;
+  needsConversion?: boolean;
   priority: number;
   matchedKeywords?: string[];
   vocabCount?: number;

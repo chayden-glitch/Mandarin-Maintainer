@@ -2,8 +2,9 @@ import type { ArticleFeed, ArticleContent } from "@shared/schema";
 import RssParser from "rss-parser";
 import * as cheerio from "cheerio";
 import * as OpenCC from "opencc-js";
-import { batchTranslateTitles } from "./gemini";
+import { batchTranslateTitles, translateTitle } from "./gemini";
 import { storage } from "./storage";
+import { processArticleText } from "./segmenter";
 
 const rssParser = new RssParser({
   timeout: 10000,
@@ -41,7 +42,13 @@ async function getPriorityKeywords(): Promise<string[]> {
   return [];
 }
 
-const NEEDS_CONVERSION = new Set(["BBC Business", "BBC Science", "BBC China"]);
+const NEEDS_CONVERSION = new Set([
+  "BBC Top Stories",
+  "BBC Business",
+  "BBC Science",
+  "BBC China",
+  "BBC World",
+]);
 
 const t2sConverter = (OpenCC as any).Converter({ from: "tw", to: "cn" });
 
@@ -132,6 +139,7 @@ export async function fetchAllFeeds(): Promise<{ articles: ArticleFeed[]; hasMis
           source: name,
           feedName: name,
           isFree,
+          needsConversion: NEEDS_CONVERSION.has(name),
           priority: score,
           matchedKeywords: matched.length > 0 ? matched : undefined,
         };
@@ -159,13 +167,41 @@ export async function fetchAllFeeds(): Promise<{ articles: ArticleFeed[]; hasMis
   try {
     const titlesToTranslate = sortedArticles.map(a => a.title);
     const translations = await batchTranslateTitles(titlesToTranslate);
-    
+
+    const missingArticles: ArticleFeed[] = [];
     for (const article of sortedArticles) {
       const translation = translations.get(article.title);
       if (translation) {
         article.translatedTitle = translation;
       } else {
-        hasMissingTranslations = true;
+        missingArticles.push(article);
+      }
+    }
+
+    // Fallback: if batch response misses some rows, recover with per-title calls.
+    if (missingArticles.length > 0) {
+      const fallbackResults = await Promise.allSettled(
+        missingArticles.map((article) => translateTitle(article.title))
+      );
+
+      fallbackResults.forEach((result, index) => {
+        const article = missingArticles[index];
+        if (result.status === "fulfilled" && result.value?.englishOnly) {
+          article.translatedTitle = result.value.englishOnly;
+        } else {
+          hasMissingTranslations = true;
+        }
+      });
+    }
+
+    if (missingArticles.length === 0) {
+      hasMissingTranslations = false;
+    } else {
+      for (const article of missingArticles) {
+        if (!article.translatedTitle) {
+          hasMissingTranslations = true;
+          break;
+        }
       }
     }
   } catch (e) {
@@ -180,6 +216,33 @@ export async function fetchAllFeeds(): Promise<{ articles: ArticleFeed[]; hasMis
         article.vocabCount = cached.vocabMatches.length;
       }
     } catch {}
+  }
+
+  const topArticles = freeArticles.slice(0, 5);
+  for (const article of topArticles) {
+    (async () => {
+      try {
+        const cached = await storage.getArticleCache(article.link);
+        if (cached) return;
+        const needsConversion = article.needsConversion ?? NEEDS_CONVERSION.has(article.feedName || "");
+        const content = await fetchArticleContent(article.link, needsConversion);
+        if (content && content.text) {
+          const translation = await translateTitle(content.title);
+          const { segments: titleSegments, vocabMatches: titleVocab } = await processArticleText(content.title);
+          const { segments, vocabMatches: textVocab } = await processArticleText(content.text);
+          const vocabMatches = Array.from(new Set([...titleVocab, ...textVocab]));
+          await storage.setArticleCache(article.link, { 
+            content: { ...content, translatedTitle: translation?.englishOnly }, 
+            titleSegments, 
+            segments, 
+            vocabMatches 
+          });
+          console.log(`Background warmed article: ${article.link}`);
+        }
+      } catch (e) {
+        console.error(`Error warming cache for ${article.link}:`, e);
+      }
+    })();
   }
 
   return { articles: sortedArticles, hasMissingTranslations };
