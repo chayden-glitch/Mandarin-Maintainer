@@ -77,6 +77,13 @@ export const articleCache = pgTable("article_cache", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const articleAudio = pgTable("article_audio", {
+  id: serial("id").primaryKey(),
+  url: text("url").notNull().unique(),
+  audioBase64: text("audio_base64").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 /**
  * Express session store (connect-pg-simple default shape).
  * Declared in Drizzle schema so `drizzle-kit push` does not treat the table as orphan and drop it.
@@ -140,6 +147,7 @@ export interface ReviewStats {
 }
 
 export type ArticleCache = typeof articleCache.$inferSelect;
+export type ArticleAudio = typeof articleAudio.$inferSelect;
 
 export type CardWithVocabulary = Card & {
   vocabulary: Vocabulary;

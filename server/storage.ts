@@ -1,5 +1,6 @@
 import {
   vocabulary, cards, hskWords, cedictEntries, settings, reviewStreaks, articleCache as articleCacheTable,
+  articleAudio as articleAudioTable,
   type Vocabulary, type InsertVocabulary,
   type Card, type InsertCard,
   type HskWord, type InsertHskWord,
@@ -89,6 +90,10 @@ export interface IStorage {
 
   getArticleCache(url: string): Promise<any | null>;
   setArticleCache(url: string, data: any): Promise<void>;
+
+  getArticleAudio(url: string, maxAgeDays?: number): Promise<string | null>;
+  setArticleAudio(url: string, audioBase64: string): Promise<void>;
+  deleteExpiredAudio(days?: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -693,6 +698,27 @@ export class DatabaseStorage implements IStorage {
       .insert(articleCacheTable)
       .values({ url, data })
       .onConflictDoUpdate({ target: articleCacheTable.url, set: { data, createdAt: new Date() } });
+  }
+
+  async getArticleAudio(url: string, maxAgeDays: number = 3): Promise<string | null> {
+    const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
+    const [result] = await db
+      .select()
+      .from(articleAudioTable)
+      .where(and(eq(articleAudioTable.url, url), gte(articleAudioTable.createdAt, cutoff)));
+    return result ? result.audioBase64 : null;
+  }
+
+  async setArticleAudio(url: string, audioBase64: string): Promise<void> {
+    await db
+      .insert(articleAudioTable)
+      .values({ url, audioBase64 })
+      .onConflictDoUpdate({ target: articleAudioTable.url, set: { audioBase64, createdAt: new Date() } });
+  }
+
+  async deleteExpiredAudio(days: number = 3): Promise<void> {
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    await db.delete(articleAudioTable).where(lt(articleAudioTable.createdAt, cutoff));
   }
 }
 

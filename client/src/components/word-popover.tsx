@@ -28,7 +28,7 @@ export function WordPopover({
 
   if (!isMatch) {
     if (segment.text === "\n\n") {
-      return <br />;
+      return <span className="block h-4" aria-hidden="true" />;
     }
     return <span>{segment.text}</span>;
   }
