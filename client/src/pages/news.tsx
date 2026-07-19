@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, ExternalLink, Volume2, Type, RefreshCw, Newspaper } from "lucide-react";
+import { ArrowLeft, ExternalLink, Volume2, Type, RefreshCw, Newspaper, Headphones } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { WordPopover, type WordSegment } from "@/components/word-popover";
+import { ArticleAudioPlayer } from "@/components/article-audio-player";
 import type { ArticleFeed, ArticleContent } from "@shared/schema";
 
 interface ProcessedArticle {
@@ -38,6 +39,10 @@ function ArticleView({
 }) {
   const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  const [audioActive, setAudioActive] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const { toast } = useToast();
 
   const articleMutation = useMutation({
     mutationFn: async (article: ArticleFeed) => {
@@ -53,6 +58,47 @@ function ArticleView({
     articleMutation.mutate(article);
   }, [article.link]);
 
+  useEffect(() => {
+    return () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    };
+  }, [audioUrl]);
+
+  const handleListen = async () => {
+    if (audioActive) return;
+    setAudioActive(true);
+    setAudioLoading(true);
+    try {
+      const params = new URLSearchParams({
+        url: article.link,
+        needsConversion: String(article.needsConversion ?? false),
+      });
+      const res = await fetch(`/api/news/article/audio?${params.toString()}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to load audio");
+      const blob = await res.blob();
+      setAudioUrl(URL.createObjectURL(blob));
+    } catch (e) {
+      toast({
+        title: "Audio unavailable",
+        description: "Could not generate audio for this article. Please try again.",
+        variant: "destructive",
+      });
+      setAudioActive(false);
+    } finally {
+      setAudioLoading(false);
+    }
+  };
+
+  const closePlayer = () => {
+    setAudioActive(false);
+    setAudioUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  };
+
   const handlePopoverClick = (x: number, y: number) => {
     setLastMousePos({ x, y });
   };
@@ -63,7 +109,7 @@ function ArticleView({
     "";
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
+    <div className={`max-w-3xl mx-auto px-4 py-4 space-y-4 ${audioActive ? "pb-24" : ""}`}>
       <div className="flex items-center justify-between gap-2 sticky top-14 z-40 bg-background/95 backdrop-blur py-2 -mx-4 px-4 border-b">
         <Button
           variant="ghost"
@@ -75,6 +121,17 @@ function ArticleView({
           Back
         </Button>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleListen}
+            disabled={audioActive}
+            className="gap-1"
+            data-testid="button-listen-article"
+          >
+            <Headphones className="w-4 h-4" />
+            <span className="hidden sm:inline">Listen</span>
+          </Button>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" data-testid="button-reader-settings">
@@ -274,6 +331,14 @@ function ArticleView({
           </div>
         )}
       </div>
+
+      {audioActive && (
+        <ArticleAudioPlayer
+          audioUrl={audioUrl}
+          isLoading={audioLoading}
+          onClose={closePlayer}
+        />
+      )}
     </div>
   );
 }
@@ -294,6 +359,22 @@ export default function NewsPage() {
     queryKey: ["/api/news/feeds"],
     staleTime: 5 * 60 * 1000,
   });
+
+  // Warm audio cache (server + browser) for the top 1-2 free articles so playback
+  // is near-instant when opened. Fire-and-forget; failures are non-blocking.
+  useEffect(() => {
+    if (!articles) return;
+    const toWarm = articles.filter((a) => a.isFree).slice(0, 2);
+    toWarm.forEach((a) => {
+      const params = new URLSearchParams({
+        url: a.link,
+        needsConversion: String(a.needsConversion ?? false),
+      });
+      fetch(`/api/news/article/audio?${params.toString()}`, {
+        credentials: "include",
+      }).catch(() => {});
+    });
+  }, [articles]);
 
   const playAudio = async (text: string) => {
     try {

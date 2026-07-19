@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { reviewCard } from "./fsrs-engine";
 import { fetchAllFeeds, fetchArticleContent } from "./rss-reader";
 import { processArticleText } from "./segmenter";
-import { generateTTS } from "./tts";
+import { generateTTS, generateArticleTTS } from "./tts";
 import { translateTitle } from "./gemini";
 import { numberedPinyinToToneMarks } from "./pinyin";
 import type { InsertVocabulary, ArticleFeed } from "@shared/schema";
@@ -17,7 +17,7 @@ let rssFeedCache: { data: ArticleFeed[]; timestamp: number; hasMissingTranslatio
 const RSS_CACHE_TTL = 30 * 60 * 1000;
 const RETRY_CACHE_TTL = 2 * 60 * 1000;
 const CHINESE_CHAR_REGEX = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
-const ARTICLE_CACHE_VERSION = 2;
+const ARTICLE_CACHE_VERSION = 4;
 
 function hasSeverelyIncompleteTranslations(
   bodySegments: Array<{ text?: string; translation?: unknown }> = [],
@@ -332,6 +332,59 @@ export async function registerRoutes(server: Server, app: Express): Promise<void
     } catch (e: any) {
       console.error("TTS error:", e);
       res.status(500).json({ message: e.message || "TTS generation failed" });
+    }
+  });
+
+  const AUDIO_TTL_DAYS = 3;
+
+  async function getOrCreateArticleAudio(
+    url: string,
+    needsConversion: boolean
+  ): Promise<Buffer | null> {
+    const cached = await storage.getArticleAudio(url, AUDIO_TTL_DAYS);
+    if (cached) {
+      return Buffer.from(cached, "base64");
+    }
+
+    const articleCache = await storage.getArticleCache(url);
+    let text: string | undefined = articleCache?.content?.text;
+    if (!text) {
+      const content = await fetchArticleContent(url, needsConversion);
+      text = content?.text;
+    }
+    if (!text) {
+      return null;
+    }
+
+    const audioBuffer = await generateArticleTTS(text);
+    await storage.setArticleAudio(url, audioBuffer.toString("base64"));
+    return audioBuffer;
+  }
+
+  app.get("/api/news/article/audio", async (req: Request, res: Response) => {
+    const url = typeof req.query.url === "string" ? req.query.url : "";
+    if (!url) return res.status(400).json({ message: "url query param required" });
+    const needsConversion = req.query.needsConversion === "true";
+
+    // Lazy TTL sweep: piggyback cleanup on user activity (no scheduler needed).
+    storage.deleteExpiredAudio(AUDIO_TTL_DAYS).catch((e) =>
+      console.warn("Audio cleanup failed:", e?.message || e)
+    );
+
+    try {
+      const audioBuffer = await getOrCreateArticleAudio(url, needsConversion);
+      if (!audioBuffer) {
+        return res.status(404).json({ message: "Could not extract article text for audio" });
+      }
+      res.set({
+        "Content-Type": "audio/mpeg",
+        "Content-Length": audioBuffer.length.toString(),
+        "Cache-Control": `private, max-age=${AUDIO_TTL_DAYS * 24 * 60 * 60}`,
+      });
+      res.send(audioBuffer);
+    } catch (e: any) {
+      console.error("Article TTS error:", e);
+      res.status(500).json({ message: e.message || "Article audio generation failed" });
     }
   });
 

@@ -92,6 +92,17 @@ function stripHtml(html: string): string {
   return $.text().trim();
 }
 
+/** Drop feed chrome that isn't article prose (BBC image credits, end-of-content markers). */
+function isBoilerplateParagraph(text: string): boolean {
+  const t = text.trim();
+  // BBC image credit caption, e.g. "图像来源，Getty Images" (simplified + traditional forms)
+  if (/^(图像来源|圖像來源)/.test(t)) return true;
+  // End-of-section markers BBC injects around embeds/sections,
+  // e.g. "End of content", "End of 热读", "End of Twitter post"
+  if (/^End of\b/i.test(t)) return true;
+  return false;
+}
+
 async function parseFeed(url: string, feedName: string): Promise<any[]> {
   try {
     const feed = await rssParser.parseURL(url);
@@ -290,7 +301,7 @@ export async function fetchArticleContent(
 
     container.find("p").each((_, el) => {
       const text = $(el).text().trim();
-      if (text && text.length > 5) {
+      if (text && text.length > 5 && !isBoilerplateParagraph(text)) {
         paragraphs.push(text);
       }
     });
@@ -298,7 +309,7 @@ export async function fetchArticleContent(
     if (paragraphs.length === 0) {
       $("body p").each((_, el) => {
         const text = $(el).text().trim();
-        if (text && text.length > 5) {
+        if (text && text.length > 5 && !isBoilerplateParagraph(text)) {
           paragraphs.push(text);
         }
       });
